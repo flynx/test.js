@@ -1,0 +1,28 @@
+{
+  "name": "ig-test",
+  "version": "1.0.0",
+  "description": "experimental test runner....",
+  "main": "test.js",
+  "scripts": {
+    "test": "node test-test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/flynx/test.js.git"
+  },
+  "keywords": [
+    "test",
+    "unit-test"
+  ],
+  "author": "Alex A. Naanou <alex.nanou@gmail.com>",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/flynx/test.js/issues"
+  },
+  "homepage": "https://github.com/flynx/test.js#readme",
+  "dependencies": {
+    "colors": "^1.4.0",
+    "ig-argv": "^2.11.2",
+    "ig-object": "^5.1.16"
+  }
+}
