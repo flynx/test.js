@@ -365,8 +365,8 @@ function(spec, chain, stats){
 typeof(__filename) != 'undefined'
 	&& __filename == (require.main || {}).filename
 	// NOTE: we are delaying code execution here to give the module a 
-	// 		chance to complete construction and the clients to use its 
-	// 		content. Otherwise the lients will get a partially formed 
+	// 		chance to complete loading and the clients to use its 
+	// 		content. Otherwise the clients will get a partially formed 
 	// 		module...
 	&& setTimeout(function(){
 
