@@ -31,6 +31,9 @@ var argv = require('ig-argv')
 
 //---------------------------------------------------------------------
 
+//module.DEFAULT_TEST_FILES = '**/test.js'
+
+
 // NOTE: to test in verbose mode do:
 // 			$ export VERBOSE=1 && npm test
 // 		or
@@ -116,6 +119,7 @@ object.Constructor('Assert', {
 
 	// assertion API...
 	__call__: function(_, value, msg, ...args){
+		msg = msg || ''
 		// stats...
 		var stats = this.stats
 		stats.assertions = (stats.assertions || 0) + 1
@@ -145,6 +149,7 @@ object.Constructor('Assert', {
 			return err } },
 	// XXX 
 	array: function(value, expected, msg){
+		msg = msg || ''
 		return this(arrayCmp(value, expected), 
 			msg +':', 'expected:', expected, 'got:', value) },
 
@@ -212,12 +217,11 @@ object.Constructor('Merged', {
 		return this },
 
 	keys: mergeIter('keys'),
-	values: mergeIter('keys'),
+	values: mergeIter('values'),
 	entries: mergeIter('entries'),
 
 	toObject: function(){
 		return Object.fromEntries(this.entries()) },
-	
 }, {
 	__init__: function(other){
 		if(arguments.length == 2){
@@ -236,15 +240,19 @@ module.Setup =
 module.Setups =
 object.Constructor('Setups', Merged, {})
 
+
 var Modifiers = 
 module.Modifier =
 module.Modifiers =
 object.Constructor('Modifiers', Merged, {})
+	.add({ 'as-is': function(_, s){ return s } })
+
 
 var Tests = 
 module.Test =
 module.Tests =
 object.Constructor('Tests', Merged, {})
+
 
 var Cases = 
 module.Case =
@@ -300,7 +308,7 @@ function(spec, chain, stats){
 	;[setups, modifiers, tests, cases] = 
 		[setups, modifiers, tests, cases]
 			.map(function(e){
-				return e instanceof Merged ?
+				return object.parentOf(Merged, e) ?
 					e.toObject()
 					: (e || {}) })
 
@@ -317,17 +325,17 @@ function(spec, chain, stats){
 	// tests...
 	var assert = Assert('[TEST]', stats, module.VERBOSE)
 	chain_length != 1
-		&& Object.keys(tests)
+		&& object.deepKeys(tests)
 			.filter(function(t){
 				return test == '*' || test == t })
 			.forEach(function(t){
 				// modifiers...
-				Object.keys(modifiers)
+				object.deepKeys(modifiers)
 					.filter(function(m){
 						return mod == '*' || mod == m })
 					.forEach(function(m){
 						// setups...
-						Object.keys(setups)
+						object.deepKeys(setups)
 							.filter(function(s){
 								return setup == '*' || setup == s })
 							.forEach(function(s){
@@ -356,8 +364,158 @@ function(spec, chain, stats){
 
 //---------------------------------------------------------------------
 // CLI...
+var parser = 
+module.parser =
+argv.Parser({
+	// doc...
+	usage: `$SCRIPTNAME [OPTIONS] [CHAIN] ...`,
+	doc: object.text`Run tests.
 
-// XXX
+		Tests run by $SCRIPTNAME can be specified in one of the 
+		following formats:
+
+				<case>
+				<setup>:<test>
+				<setup>:<modifier>:<test>
+
+		Each of the items in the test spec can be a "*" indicating
+		that all relevant items should be used, for example:
+
+				$ ./$SCRIPTNAME basic:*:*
+
+		Here $SCRIPTNAME is instructed to run all tests and modifiers
+		only on the basic setup.
+
+		Zero or more sets of tests can be specified.
+
+		When no tests specified $SCRIPTNAME will run all tests.
+		`,
+	examples: [
+		['$ ./$SCRIPTNAME', 
+			'run all tests.'.gray],
+		['$ ./$SCRIPTNAME basic:*:*', 
+			'run all tests and modifiers on "basic" setup.'.gray,
+			'(see $SCRIPTNAME -l for more info)'.gray],
+		['$ ./$SCRIPTNAME -v example', 
+			'run "example" test in verbose mode.'.gray],
+		['$ ./$SCRIPTNAME native:gen3:methods init:gen3:methods', 
+			'run two tests/patterns.'.gray],
+		//['$ export VERBOSE=1 && ./$SCRIPTNAME', 
+		//	'set verbose mode globally and run tests.'.gray],
+	],
+
+
+	// options...
+	'-l': '-list',
+	'-list': {
+		doc: 'list available tests.',
+		handler: function(){
+			var keys = function(s){
+				return object.parentOf(Merged, s) ?
+					s.keys()
+					: Object.keys(s)}
+			console.log(
+				object.text`Tests run by %s can be of the following forms:
+
+					<case>
+					<setup>:<test>
+					<setup>:<modifier>:<test>
+
+				Setups:
+					${ keys(this.setups).join('\n\
+					') }
+
+				Modifiers:
+					${ keys(this.modifiers).join('\n\
+					') }
+
+				Tests:
+					${ keys(this.tests).join('\n\
+					') }
+
+				Standalone test cases:
+					${ keys(this.cases).join('\n\
+					') }
+				`, this.scriptName)
+			process.exit() }},
+
+
+	default_files: undefined,
+
+	'-f': '-test-file',
+	'-test-file': {
+		doc: 'test script',
+		arg: 'PATH',
+
+		default: function(){
+			return this.default_files },
+
+		handler: function(args, key, path){
+			this.test_modules = this.test_modules || {}
+
+			// load the test modules...
+			// XXX expand glob and do this for each expanded file...
+			;(/.*\.js$/.test(path))
+				&& (this.test_modules[path] = require('./' + path.replace(/\.js$/, '')))
+		}},
+
+
+	'-verbose': {
+		doc: 'verbose mode',
+		env: 'VERBOSE',
+		handler: function(){
+			module.VERBOSE = true }},
+
+	// hide stuff we do not need...
+	'-quiet': undefined,
+	'-': undefined,
+
+	// XXX might be a good idea to check chain syntax here...
+	'@*': undefined,
+})
+
+
+
+//---------------------------------------------------------------------
+
+var run =
+module.run =
+function(default_files, tests){
+	var stats = {}
+	var tests = tests || {
+		setups: Setups,
+		modifiers: Modifiers,
+		tests: Tests,
+		cases: Cases,
+	}
+	var p = Object.assign(
+		Object.create(parser), 
+		tests,
+		{
+			default_files: default_files,
+		})
+
+	return p
+		// XXX should this be generic???
+		.then(function(chains){
+			// run the tests...
+			chains.length > 0 ?
+				chains
+					.forEach(function(chain){
+						runner(tests, chain, stats) })
+				: runner(tests, '*', stats)
+
+			// print stats...
+			console.log(
+				'Tests run:', stats.tests, 
+				'  Assertions:', stats.assertions, 
+				'  Failures:', stats.failures,
+				`  (${stats.time}ms)`.bold.black) 
+
+			// report error status to the OS...
+			process.exit(stats.failures)
+		})
+		.call() }
 
 
 
@@ -368,26 +526,7 @@ typeof(__filename) != 'undefined'
 	// 		chance to complete loading and the clients to use its 
 	// 		content. Otherwise the clients will get a partially formed 
 	// 		module...
-	&& setTimeout(function(){
-
-		// XXX get test modules...
-
-		require('./test-test')
-
-		console.log(Setups.keys())
-
-
-		var stats = runner({
-			setups: Setups,
-			modifiers: Modifiers,
-			tests: Tests,
-			cases: Cases,
-		})
-
-		console.log('>>>>>>>>>', stats)
-
-
-	}, 0)
+	&& setTimeout(run.bind(null, module.DEFAULT_TEST_FILES), 0)
 
 
 

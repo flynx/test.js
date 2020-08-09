@@ -28,14 +28,32 @@ var tests = require('./test')
 
 //---------------------------------------------------------------------
 
-tests.Setup('single-dummy', 
-	function(){ console.log('DUMMY TEST') })
+tests.Setup('setup', 
+	function(assert){ 
+		assert(true)
+		return {} })
 
 tests.Setups({
-	dummy: function(){
-		console.log('DUMMY TEST') },
+	setup2: function(assert){
+		assert(true)
+		return {} },
+	setup3: function(assert){
+		assert(true)
+		return {} },
 })
 
+tests.Test('dummy', 
+	function(assert, setup){
+		assert(true)
+	})
+
+
+
+
+//---------------------------------------------------------------------
+typeof(__filename) != 'undefined'
+	&& __filename == (require.main || {}).filename
+	&& tests.run()
 
 
 

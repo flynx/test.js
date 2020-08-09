@@ -22,7 +22,7 @@
   "homepage": "https://github.com/flynx/test.js#readme",
   "dependencies": {
     "colors": "^1.4.0",
-    "ig-argv": "^2.11.2",
-    "ig-object": "^5.1.16"
+    "ig-argv": "^2.11.5",
+    "ig-object": "^5.2.2"
   }
 }
