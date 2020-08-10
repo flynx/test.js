@@ -1,6 +1,6 @@
 {
   "name": "ig-test",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "experimental test runner....",
   "main": "test.js",
   "scripts": {
@@ -22,7 +22,8 @@
   "homepage": "https://github.com/flynx/test.js#readme",
   "dependencies": {
     "colors": "^1.4.0",
-    "ig-argv": "^2.11.5",
+    "glob": "^7.1.6",
+    "ig-argv": "^2.12.0",
     "ig-object": "^5.2.2"
   }
 }

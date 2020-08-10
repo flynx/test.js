@@ -23,7 +23,7 @@
 /*********************************************************************/
 
 var colors = require('colors')
-//var glob = require('glob')
+var glob = require('glob')
 
 var object = require('ig-object')
 var argv = require('ig-argv')
@@ -32,8 +32,7 @@ var argv = require('ig-argv')
 
 //---------------------------------------------------------------------
 
-// XXX needs glob...
-//module.DEFAULT_TEST_FILES = '**/test.js'
+module.DEFAULT_TEST_FILES = '**/?(*-)test.js'
 
 
 // NOTE: to test in verbose mode do:
@@ -449,20 +448,28 @@ argv.Parser({
 
 	'-f': '-test-file',
 	'-test-file': {
-		doc: 'test script',
+		doc: ['test script or filename patter, supports glob.',
+			'this flag can be given multiple times for',
+			'multiple paths/patterns'],
 		arg: 'PATH',
 
 		default: function(){
 			return this.default_files },
 
 		handler: function(args, key, path){
+			var that = this
 			this.test_modules = this.test_modules || {}
 
-			// load the test modules...
-			// XXX expand glob and do this for each expanded file...
-			;(/.*\.js$/.test(path))
-				&& (this.test_modules[path] = require('./' + path.replace(/\.js$/, '')))
-		}},
+			;(path.includes('*') ?
+					// search...
+					glob.sync(path, {})
+					: [path])
+				// load the modules...
+				.forEach(function(path){
+					// only load .js files...
+					;(/.*\.js$/.test(path))
+						&& (that.test_modules[path] = 
+							require('./' + path.slice(0, -3))) }) }},
 
 
 	'-verbose': {
