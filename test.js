@@ -23,6 +23,7 @@
 /*********************************************************************/
 
 var colors = require('colors')
+//var glob = require('glob')
 
 var object = require('ig-object')
 var argv = require('ig-argv')
@@ -31,6 +32,7 @@ var argv = require('ig-argv')
 
 //---------------------------------------------------------------------
 
+// XXX needs glob...
 //module.DEFAULT_TEST_FILES = '**/test.js'
 
 
@@ -79,6 +81,7 @@ module.VERBOSE = process ?
 //		-> error
 //
 //
+// XXX this should be optional...
 var Assert = 
 module.Assert =
 object.Constructor('Assert', {
@@ -245,6 +248,7 @@ var Modifiers =
 module.Modifier =
 module.Modifiers =
 object.Constructor('Modifiers', Merged, {})
+	// a basic default...
 	.add({ 'as-is': function(_, s){ return s } })
 
 
@@ -262,7 +266,6 @@ object.Constructor('Cases', Merged, {})
 
 
 //---------------------------------------------------------------------
-
 // Test runner...
 //
 // 	runner(spec)
@@ -285,6 +288,8 @@ object.Constructor('Cases', Merged, {})
 //
 //
 // NOTE: chaining more than one modifier is not yet supported (XXX)
+//
+// XXX make Assert optional...
 var runner = 
 module.runner =
 function(spec, chain, stats){
@@ -477,10 +482,37 @@ argv.Parser({
 
 
 //---------------------------------------------------------------------
-
+// Base runner...
+//
+// 	run()
+// 	run(tests)
+// 	run(default_files)
+// 	run(default_files, tests)
+// 		-> parse-result
+//
+//
+// tests format:
+// 	{
+// 		setups: <setup-object>,
+//
+// 		modifiers: <modifier-object>,
+//
+// 		tests: <tests-object>,
+//
+// 		cases: <cases-object>,
+//
+// 		...
+// 	}
+//
 var run =
 module.run =
 function(default_files, tests){
+	// parse args -- run(tests)...
+	if(!(default_files instanceof Array 
+			|| typeof(default_files) == typeof('str'))){
+		tests = default_files
+		default_files = undefined }
+	
 	var stats = {}
 	var tests = tests || {
 		setups: Setups,
