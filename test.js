@@ -6,17 +6,6 @@
 * Repo and docs:
 * 	https://github.com/flynx/test.js
 *
-*
-* XXX need an interface, preferably zero-config with command-line...
-* 		something like:
-* 			$ ig-test ./test.js base:*:*		- test script...
-* 		or:
-* 			$ ig-test base:*:*					- locate tests...
-* XXX need a way to reuse the thing...
-*
-*
-*
-*
 ***********************************************/ /* c8 ignore next 2 */
 ((typeof define)[0]=='u'?function(f){module.exports=f(require)}:define)
 (function(require){ var module={} // make module AMD/node compatible...
@@ -32,6 +21,12 @@ var argv = require('ig-argv')
 
 //---------------------------------------------------------------------
 
+//
+//	DEFAULT_TEST_FILES =
+// 		undefined
+// 		| <path>
+// 		| [ <path>, .. ]
+//
 module.DEFAULT_TEST_FILES = '**/?(*-)test.js'
 
 
@@ -460,16 +455,20 @@ argv.Parser({
 			var that = this
 			this.test_modules = this.test_modules || {}
 
-			;(path.includes('*') ?
-					// search...
-					glob.sync(path, {})
+			;(path instanceof Array ?
+					path
 					: [path])
-				// load the modules...
 				.forEach(function(path){
-					// only load .js files...
-					;(/.*\.js$/.test(path))
-						&& (that.test_modules[path] = 
-							require('./' + path.slice(0, -3))) }) }},
+					;(path.includes('*') ?
+							// search...
+							glob.sync(path, {})
+							: [path])
+						// load the modules...
+						.forEach(function(path){
+							// only load .js files...
+							/.*\.js$/.test(path)
+								&& (that.test_modules[path] = 
+									require('./' + path.slice(0, -3))) }) }) }},
 
 
 	'-verbose': {
@@ -565,6 +564,8 @@ typeof(__filename) != 'undefined'
 	// 		chance to complete loading and the clients to use its 
 	// 		content. Otherwise the clients will get a partially formed 
 	// 		module...
+	// 		This is needed only here, client code can safely and simply
+	// 		call run(..)
 	&& setTimeout(run.bind(null, module.DEFAULT_TEST_FILES), 0)
 
 
