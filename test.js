@@ -197,8 +197,13 @@ object.Constructor('Merged', {
 	// 		of members...
 	// 		for the number of members use:
 	// 			<constructor>.members.length
-	get length(){
-		return this.members.keys().length },
+	// XXX for some reason this is shadowed by .length set on the 
+	// 		constructor....
+	// 		poked around a bit, .length seems to be the number of arguments 
+	// 		in a function, so we should use something differernt here...
+	// 		...should rename this to something else...
+	get size(){
+		return this.keys().length },
 
 	add: function(member){
 		this.members.push(member)
@@ -243,13 +248,16 @@ module.Modifier =
 module.Modifiers =
 object.Constructor('Modifiers', Merged, {})
 	// a basic default...
-	.add({ 'as-is': function(_, s){ return s } })
+	// XXX should this be here or should each setup be run alone...
+	.add({ '-': function(_, s){ return s } })
 
 
 var Tests = 
 module.Test =
 module.Tests =
 object.Constructor('Tests', Merged, {})
+	// XXX should this be here or should each setup be run alone...
+	.add({ '-': function(_, s){ return s } })
 
 
 var Cases = 
@@ -260,7 +268,7 @@ object.Constructor('Cases', Merged, {})
 
 
 //---------------------------------------------------------------------
-// Test runner...
+// Test runner/combinator...
 //
 // 	runner(spec)
 // 	runner(spec, '*')
@@ -284,6 +292,7 @@ object.Constructor('Cases', Merged, {})
 // NOTE: chaining more than one modifier is not yet supported (XXX)
 //
 // XXX make Assert optional...
+// XXX is this a good name???
 var runner = 
 module.runner =
 function(spec, chain, stats){
@@ -363,6 +372,7 @@ function(spec, chain, stats){
 
 //---------------------------------------------------------------------
 // CLI...
+//
 var parser = 
 module.parser =
 argv.Parser({
