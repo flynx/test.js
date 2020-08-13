@@ -246,6 +246,8 @@ module.Modifier =
 module.Modifiers =
 object.Constructor('Modifiers', Merged, {})
 	// default blank pass-through...
+	// NOTE: we need at least one modifier and at least one test for the 
+	// 		system to run....
 	.add({ '-': function(_, s){ return s })
 
 
@@ -254,6 +256,8 @@ module.Test =
 module.Tests =
 object.Constructor('Tests', Merged, {})
 	// default blank pass-through...
+	// NOTE: we need at least one modifier and at least one test for the 
+	// 		system to run....
 	.add({ '-': function(_, s){ return s })
 
 
