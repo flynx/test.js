@@ -197,11 +197,9 @@ object.Constructor('Merged', {
 	// 		of members...
 	// 		for the number of members use:
 	// 			<constructor>.members.length
-	// XXX for some reason this is shadowed by .length set on the 
-	// 		constructor....
-	// 		poked around a bit, .length seems to be the number of arguments 
-	// 		in a function, so we should use something differernt here...
-	// 		...should rename this to something else...
+	// NOTE: we are using .size and not .length here because .length is 
+	// 		used to indicate the number of arguments to a callable/function
+	// 		in JS... 
 	get size(){
 		return this.keys().length },
 
@@ -247,17 +245,16 @@ var Modifiers =
 module.Modifier =
 module.Modifiers =
 object.Constructor('Modifiers', Merged, {})
-	// a basic default...
-	// XXX should this be here or should each setup be run alone...
-	.add({ '-': function(_, s){ return s } })
+	// default blank pass-through...
+	.add({ '-': function(_, s){ return s })
 
 
 var Tests = 
 module.Test =
 module.Tests =
 object.Constructor('Tests', Merged, {})
-	// XXX should this be here or should each setup be run alone...
-	.add({ '-': function(_, s){ return s } })
+	// default blank pass-through...
+	.add({ '-': function(_, s){ return s })
 
 
 var Cases = 
@@ -291,6 +288,7 @@ object.Constructor('Cases', Merged, {})
 //
 // NOTE: chaining more than one modifier is not yet supported (XXX)
 //
+// XXX chain N modifiers...
 // XXX make Assert optional...
 // XXX is this a good name???
 var runner = 
@@ -351,7 +349,11 @@ function(spec, chain, stats){
 									return }
 								// run the test...
 								stats.tests += 1
-								var _assert = assert.push([s, m, t])
+								var _assert = assert.push(
+									[s, m, t]
+										// do not print blank pass-through ('-') 
+										// components...
+										.filter(function(e){ return e != '-' }) )
 								tests[t](_assert, 
 									modifiers[m](_assert, 
 										setups[s](_assert))) }) }) }) 

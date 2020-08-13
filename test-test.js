@@ -19,22 +19,21 @@ var tests = require('./test')
 
 tests.Setup('setup', 
 	function(assert){ 
-		assert(true, 'assert')
+		assert(true, 'setup: assert')
 		return {} })
 
 tests.Setups({
 	setup2: function(assert){
-		assert(true, 'assert')
+		assert(true, 'setup2: assert')
 		return {} },
 	setup3: function(assert){
-		assert(true, 'assert')
+		assert(true, 'setup3: assert')
 		return {} },
 })
 
-// XXX for some reason this is run twice....
 tests.Test('dummy', 
 	function(assert, setup){
-		assert(true, 'assert')
+		assert(true, 'dummy: assert')
 	})
 
 console.log('>>>>', tests.Tests.members)
