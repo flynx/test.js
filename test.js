@@ -424,14 +424,16 @@ argv.Parser({
 
 	'-l': '-list',
 	'-list': {
-		doc: ['list available tests.',
+		doc: ['list available tests;',
 			'note that if passing files via -f explicitly they',
-			'must precede the -list flag.'],
+			'must precede the -l/-list flag;',
+			'this has the same defaults as -f'],
 		arg: 'PATH',
 		handler: function(args, key, path){
 			path = path || this.default_files
 			// load path or the defaults if nothing loaded...
-			;(path != this.default_files
+			path
+				&& (path != this.default_files
 					|| this.test_modules == null)
 				&& this.handle('-f', [], key, path)
 			// get key value...
@@ -474,7 +476,7 @@ argv.Parser({
 	// XXX revise error handling...
 	'-f': '-test-file',
 	'-test-file': {
-		doc: ['test script or filename patter, supports glob.',
+		doc: ['test script or filename pattern, supports glob;',
 			'this flag can be given multiple times for',
 			'multiple paths/patterns'],
 		arg: 'PATH',

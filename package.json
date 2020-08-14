@@ -1,8 +1,11 @@
 {
   "name": "ig-test",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "experimental test runner....",
   "main": "test.js",
+  "bin": {
+    "runtests": "test.js"
+  },
   "scripts": {
     "test": "node test-test.js"
   },
