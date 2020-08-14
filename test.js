@@ -31,11 +31,11 @@ module.DEFAULT_TEST_FILES = '**/?(*-)test.js'
 
 
 // NOTE: to test in verbose mode do:
-// 			$ export VERBOSE=1 && npm test
+// 			$ VERBOSE=1 npm test
 // 		or
-// 			$ export VERBOSE=1 && node test.js
-// 		or set this manually after require('./test') but before running 
-// 		the runner(..)
+// 			$ VERBOSE=1 node test.js
+// 		or set this manually after require('./test') but before calling 
+// 		the runner(..) or run(..)
 // NOTE: this may change in the future...
 module.VERBOSE = process ?
 	process.env.VERBOSE
@@ -181,7 +181,6 @@ var mergeIter = function(iter){
 // 		-> merged
 //
 //
-// XXX is this the right name for this??
 var Merged = 
 module.Merged =
 object.Constructor('Merged', {

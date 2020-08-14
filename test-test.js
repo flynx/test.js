@@ -33,8 +33,7 @@ tests.Setups({
 
 tests.Test('dummy', 
 	function(assert, setup){
-		assert(true, 'dummy: assert')
-	})
+		assert(true, 'dummy: assert') })
 
 
 
