@@ -248,7 +248,7 @@ object.Constructor('Modifiers', Merged, {})
 	// default blank pass-through...
 	// NOTE: we need at least one modifier and at least one test for the 
 	// 		system to run....
-	.add({ '-': function(_, s){ return s })
+	.add({ '-': function(_, s){ return s }})
 
 
 var Tests = 
@@ -258,7 +258,7 @@ object.Constructor('Tests', Merged, {})
 	// default blank pass-through...
 	// NOTE: we need at least one modifier and at least one test for the 
 	// 		system to run....
-	.add({ '-': function(_, s){ return s })
+	.add({ '-': function(_, s){ return s }})
 
 
 var Cases = 
