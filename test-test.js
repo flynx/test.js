@@ -36,12 +36,6 @@ tests.Test('dummy',
 		assert(true, 'dummy: assert')
 	})
 
-console.log('>>>>', tests.Tests.members)
-console.log('>>>>', tests.Tests.keys())
-// XXX this does not call the Merged.length for some reason...
-console.log('>>>>', tests.Tests.size)
-
-
 
 
 //---------------------------------------------------------------------

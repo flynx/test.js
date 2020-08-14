@@ -420,11 +420,21 @@ argv.Parser({
 	],
 
 
-	// options...
+	default_files: undefined,
+
 	'-l': '-list',
 	'-list': {
-		doc: 'list available tests.',
-		handler: function(){
+		doc: ['list available tests.',
+			'note that if passing files via -f explicitly they',
+			'must precede the -list flag.'],
+		arg: 'PATH',
+		handler: function(args, key, path){
+			path = path || this.default_files
+			// load path or the defaults if nothing loaded...
+			;(path != this.default_files
+					|| this.test_modules == null)
+				&& this.handle('-f', [], key, path)
+			// get key value...
 			var keys = function(s){
 				return object.parentOf(Merged, s) ?
 					s.keys()
@@ -441,11 +451,15 @@ argv.Parser({
 					') }
 
 				Modifiers:
-					${ keys(this.modifiers).join('\n\
+					${ keys(this.modifiers)
+						.filter(function(e){ return e != '-' })
+						.join('\n\
 					') }
 
 				Tests:
-					${ keys(this.tests).join('\n\
+					${ keys(this.tests)
+						.filter(function(e){ return e != '-' })
+						.join('\n\
 					') }
 
 				Standalone test cases:
@@ -455,18 +469,17 @@ argv.Parser({
 			process.exit() }},
 
 
-	default_files: undefined,
+	test_modules: undefined,
 
+	// XXX revise error handling...
 	'-f': '-test-file',
 	'-test-file': {
 		doc: ['test script or filename patter, supports glob.',
 			'this flag can be given multiple times for',
 			'multiple paths/patterns'],
 		arg: 'PATH',
-
 		default: function(){
 			return this.default_files },
-
 		handler: function(args, key, path){
 			var that = this
 			this.test_modules = this.test_modules || {}
@@ -482,9 +495,12 @@ argv.Parser({
 						// load the modules...
 						.forEach(function(path){
 							// only load .js files...
-							/.*\.js$/.test(path)
-								&& (that.test_modules[path] = 
-									require('./' + path.slice(0, -3))) }) }) }},
+							if(!/.*\.js$/.test(path)){
+								throw argv.ParserError(
+									`${key}: only support .js modules, got: "${path}"`) }
+							// XXX should we handle the load error here???
+							that.test_modules[path] = 
+								require('./' + path.slice(0, -3)) }) }) }},
 
 
 	'-verbose': {
