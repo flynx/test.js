@@ -27,11 +27,21 @@ var argv = require('ig-argv')
 // 		| <path>
 // 		| [ <path>, .. ]
 //
-// XXX need to skip ./node_modules...
 module.DEFAULT_TEST_FILES = '**/?(*-)test.js'
+
+
+//
+//	IGNORE_TEST_FILES =
+//		undefined
+//		| [ <path>, .. ]
+//
 module.IGNORE_TEST_FILES = ['node_modules/**']
 
 
+//
+//	VERBOSE = <bool>
+//
+//
 // NOTE: to test in verbose mode do:
 // 			$ VERBOSE=1 npm test
 // 		or
@@ -277,9 +287,7 @@ object.Constructor('Tests', Merged, {})
 	// default blank pass-through...
 	// NOTE: we need at least one modifier and at least one test for the 
 	// 		system to run....
-	.add({ '-': function(_, s){ 
-		console.log('--------------')
-		return s }})
+	.add({ '-': function(_, s){ return s }})
 
 
 var Cases = 
@@ -525,8 +533,8 @@ argv.Parser({
 							// search...
 							glob.sync(path, {
 								ignore: this.ignore_files 
-									|| module.IGNORE_TEST_FILES, 
-							})
+									|| module.IGNORE_TEST_FILES
+									|| [], })
 							: [path])
 						// load the modules...
 						.forEach(function(path){
@@ -534,6 +542,7 @@ argv.Parser({
 							if(!/.*\.js$/.test(path)){
 								throw argv.ParserError(
 									`${key}: only support .js modules, got: "${path}"`) }
+							console.log('found module:', path)
 							// XXX should we handle the load error here???
 							that.test_modules[path] = 
 								require(process.cwd() +'/'+ path.slice(0, -3)) }) }) }},
@@ -549,7 +558,8 @@ argv.Parser({
 		collect: 'list',
 		default: function(){
 			return this.ignore_files 
-				|| module.IGNORE_TEST_FILES } },
+				|| module.IGNORE_TEST_FILES 
+				|| [] } },
 
 
 	'-verbose': {
