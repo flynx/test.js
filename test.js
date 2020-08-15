@@ -449,6 +449,7 @@ argv.Parser({
 	],
 
 
+	// list tests...
 	default_files: undefined,
 
 	'-l': '-list',
@@ -500,6 +501,7 @@ argv.Parser({
 			process.exit() }},
 
 
+	// add files/patterns...
 	test_modules: undefined,
 
 	// XXX revise error handling...
@@ -534,9 +536,10 @@ argv.Parser({
 									`${key}: only support .js modules, got: "${path}"`) }
 							// XXX should we handle the load error here???
 							that.test_modules[path] = 
-								require('./' + path.slice(0, -3)) }) }) }},
+								require(process.cwd() +'/'+ path.slice(0, -3)) }) }) }},
 
 
+	// ignore paths...
 	ignore_files: undefined,
 
 	'-i': '-ignore',
@@ -554,6 +557,7 @@ argv.Parser({
 		env: 'VERBOSE',
 		handler: function(){
 			module.VERBOSE = true }},
+
 
 	// hide stuff we do not need...
 	'-quiet': undefined,
