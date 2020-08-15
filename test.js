@@ -44,6 +44,22 @@ module.VERBOSE = process ?
 
 
 //---------------------------------------------------------------------
+
+// compare two arrays by items...
+// XXX this is defined in object.js/test.js and here, need to chose one...
+var arrayCmp = function(a, b){
+	var ka = Object.keys(a)
+	var kb = Object.keys(a)
+	return a === b
+		|| (a.length == b.length
+			&& ka
+				// keep only non matching stuff...
+				.filter(function(k){
+					return a[k] !== b[k] 
+						&& a[k] != a[k] })
+				.length == 0) }
+
+
 // Assert constructor...
 //
 //	Create an assert callable...
@@ -171,6 +187,8 @@ var mergeIter = function(iter){
 			.flat() } }
 
 
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 //
@@ -227,7 +245,7 @@ object.Constructor('Merged', {
 			var [name, func] = arguments
 			other = {[name]: func}
 		}
-		Object.assign(this, other) 
+		object.mixinFlat(this, other) 
 		this.constructor.add(this) }, 
 })
 
@@ -257,7 +275,9 @@ object.Constructor('Tests', Merged, {})
 	// default blank pass-through...
 	// NOTE: we need at least one modifier and at least one test for the 
 	// 		system to run....
-	.add({ '-': function(_, s){ return s }})
+	.add({ '-': function(_, s){ 
+		console.log('--------------')
+		return s }})
 
 
 var Cases = 
@@ -335,8 +355,16 @@ function(spec, chain, stats){
 	var assert = Assert('[TEST]', stats, module.VERBOSE)
 	chain_length != 1
 		&& object.deepKeys(tests)
-			.filter(function(t){
-				return test == '*' || test == t })
+			.filter(function(t, i, l){
+				return (
+					// skip blank tests if we have other tests unless 
+					// explicitly specified...
+					(t == '-' 
+						&& test != t 
+						&& l.length > 1) ?
+					false
+					: (test == '*' 
+						|| test == t) ) })
 			.forEach(function(t){
 				// modifiers...
 				object.deepKeys(modifiers)
