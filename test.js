@@ -27,7 +27,9 @@ var argv = require('ig-argv')
 // 		| <path>
 // 		| [ <path>, .. ]
 //
+// XXX need to skip ./node_modules...
 module.DEFAULT_TEST_FILES = '**/?(*-)test.js'
+module.IGNORE_TEST_FILES = ['node_modules/**']
 
 
 // NOTE: to test in verbose mode do:
@@ -519,7 +521,10 @@ argv.Parser({
 				.forEach(function(path){
 					;(path.includes('*') ?
 							// search...
-							glob.sync(path, {})
+							glob.sync(path, {
+								ignore: this.ignore_files 
+									|| module.IGNORE_TEST_FILES, 
+							})
 							: [path])
 						// load the modules...
 						.forEach(function(path){
@@ -530,6 +535,18 @@ argv.Parser({
 							// XXX should we handle the load error here???
 							that.test_modules[path] = 
 								require('./' + path.slice(0, -3)) }) }) }},
+
+
+	ignore_files: undefined,
+
+	'-i': '-ignore',
+	'-ignore': {
+		doc: 'path/pattern to ignore in test file search',
+		arg: 'PATH | ignore_files',
+		collect: 'list',
+		default: function(){
+			return this.ignore_files 
+				|| module.IGNORE_TEST_FILES } },
 
 
 	'-verbose': {
