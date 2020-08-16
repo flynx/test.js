@@ -612,9 +612,15 @@ function(default_files, tests){
 		tests = default_files
 		default_files = undefined }
 	
-	// patch require.cache to make the clients load the global module...
-	var local = path.join(process.cwd(), 'node_modules', 'ig-test', 'test.js')
-	require.cache[local] = require.cache[require.main.filename]
+	// patch require.cache...
+	// NOTE: this will make all the client scripts see the global module 
+	// 		instead of local stuff...
+	if(typeof(__filename) != 'undefined'
+			&& __filename == (require.main || {}).filename){
+		// XXX is guessing this the correct way to do this???
+		// 		...should we use glog.sync(process.cwd()+'/**/ig-test/test.js') instead???
+		var local = path.join(process.cwd(), 'node_modules', 'ig-test', 'test.js')
+		require.cache[local] = require.cache[require.main.filename] }
 
 	var stats = {}
 	var tests = tests 
