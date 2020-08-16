@@ -11,6 +11,7 @@
 (function(require){ var module={} // make module AMD/node compatible...
 /*********************************************************************/
 
+var path = require('path')
 var colors = require('colors')
 var glob = require('glob')
 
@@ -542,7 +543,7 @@ argv.Parser({
 							if(!/.*\.js$/.test(path)){
 								throw argv.ParserError(
 									`${key}: only support .js modules, got: "${path}"`) }
-							console.log('found module:', path)
+							console.log('Loading module:', path)
 							// XXX should we handle the load error here???
 							that.test_modules[path] = 
 								require(process.cwd() +'/'+ path.slice(0, -3)) }) }) }},
@@ -611,13 +612,18 @@ function(default_files, tests){
 		tests = default_files
 		default_files = undefined }
 	
+	// patch require.cache to make the clients load the global module...
+	var local = path.join(process.cwd(), 'node_modules', 'ig-test', 'test.js')
+	require.cache[local] = require.cache[require.main.filename]
+
 	var stats = {}
-	var tests = tests || {
-		setups: Setups,
-		modifiers: Modifiers,
-		tests: Tests,
-		cases: Cases,
-	}
+	var tests = tests 
+		|| {
+			setups: Setups,
+			modifiers: Modifiers,
+			tests: Tests,
+			cases: Cases,
+		}
 	var p = Object.assign(
 		Object.create(parser), 
 		tests,
