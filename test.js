@@ -6,12 +6,15 @@
 * Repo and docs:
 * 	https://github.com/flynx/test.js
 *
+* TODO:
+* 	- report shadowing of tests...
+*
 ***********************************************/ /* c8 ignore next 2 */
 ((typeof define)[0]=='u'?function(f){module.exports=f(require)}:define)
 (function(require){ var module={} // make module AMD/node compatible...
 /*********************************************************************/
 
-var path = require('path')
+var npath = require('path')
 var colors = require('colors')
 var glob = require('glob')
 
@@ -53,6 +56,37 @@ module.IGNORE_TEST_FILES = ['node_modules/**']
 module.VERBOSE = process ?
 	process.env.VERBOSE
 	: false
+
+
+
+//---------------------------------------------------------------------
+
+var getCallerFilename =
+module.getCallerFilename =
+function(){
+	var f = Error.prepareStackTrace
+	try {
+		var err = new Error()
+
+		// critical section...
+		// NOTE: would subclass Error and overload .prepareStackTrace(..) 
+		// 		in it but it does not work, likely to that it is called
+		// 		directly on Error and not via the proto chain...
+		Error.prepareStackTrace = function(_, stack){ return stack }
+		var stack = err.stack
+		Error.prepareStackTrace = f
+
+		var cur = stack.shift().getFileName()
+
+		while(stack.length > 0){
+			var caller = stack.shift().getFileName()
+			if(caller && cur != caller){
+				return caller }}
+	} catch(e){}
+	// cleanup...
+	Error.prepareStackTrace !== f
+		&& (Error.prepareStackTrace = f)
+	return }
 
 
 
@@ -253,11 +287,20 @@ object.Constructor('Merged', {
 	toObject: function(){
 		return Object.fromEntries(this.entries()) },
 }, {
+	filename: undefined,
+
 	__init__: function(other){
 		if(arguments.length == 2){
 			var [name, func] = arguments
 			other = {[name]: func}
 		}
+
+		var f = getCallerFilename()
+		Object.entries(Object.getOwnPropertyDescriptors(other))
+			.forEach(function([k, p]){
+				typeof(p.value) == 'function'
+					&& (p.value.filename = p.value.filename || f) })
+
 		object.mixinFlat(this, other) 
 		this.constructor.add(this) }, 
 })
@@ -458,6 +501,8 @@ argv.Parser({
 	],
 
 
+	// XXX might be a good idea to reformat this to indicate origin 
+	// 		modules...
 	// list tests...
 	default_files: undefined,
 
@@ -475,13 +520,27 @@ argv.Parser({
 				&& (path != this.default_files
 					|| this.test_modules == null)
 				&& this.handle('-f', [], key, path)
+			var offset = (this.helpColumnOffset || 3) * 8
 			// get key value...
 			var keys = function(s){
-				return object.parentOf(Merged, s) ?
-					s.keys()
-					: Object.keys(s)}
+				return (object.parentOf(Merged, s) ?
+						s.entries()
+						: Object.entries(s))
+					.map(function([k, v]){
+						var o = offset - k.length 
+						var s = [
+							k, 
+							v.filename ?
+								' '.repeat(o > 0 ? o : offset) 
+									+ `- ${ npath.relative(process.cwd(), v.filename) }: `
+								: '' ]
+						return o > 0 ?
+							s.join('')
+							: s })
+					.flat() }
 			console.log(
-				object.text`Tests run by %s can be of the following forms:
+				object.text`
+				Tests run by %s can be of the following forms:
 
 					<case>
 					<setup>:<test>
@@ -611,7 +670,7 @@ function(default_files, tests){
 			|| typeof(default_files) == typeof('str'))){
 		tests = default_files
 		default_files = undefined }
-	
+
 	// patch require.cache...
 	// NOTE: this will make all the client scripts see the global module 
 	// 		instead of local stuff...
@@ -619,7 +678,7 @@ function(default_files, tests){
 			&& __filename == (require.main || {}).filename){
 		// XXX is guessing this the correct way to do this???
 		// 		...should we use glog.sync(process.cwd()+'/**/ig-test/test.js') instead???
-		var local = path.join(process.cwd(), 'node_modules', 'ig-test', 'test.js')
+		var local = npath.join(process.cwd(), 'node_modules', 'ig-test', 'test.js')
 		require.cache[local] = require.cache[require.main.filename] }
 
 	var stats = {}
