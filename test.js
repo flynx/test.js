@@ -532,7 +532,7 @@ argv.Parser({
 							k, 
 							v.filename ?
 								' '.repeat(o > 0 ? o : offset) 
-									+ `- ${ npath.relative(process.cwd(), v.filename) }: `
+									+ `- ${ npath.relative(process.cwd(), v.filename) }`
 								: '' ]
 						return o > 0 ?
 							s.join('')
