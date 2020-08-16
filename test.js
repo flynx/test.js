@@ -501,9 +501,9 @@ argv.Parser({
 	],
 
 
-	// XXX might be a good idea to reformat this to indicate origin 
-	// 		modules...
 	// list tests...
+	//
+	// NOTE: this uses .helpColumnOffset to align origins...
 	default_files: undefined,
 
 	'-l': '-list',
@@ -538,6 +538,11 @@ argv.Parser({
 							s.join('')
 							: s })
 					.flat() }
+			// XXX should this account for pass-through elements...
+			var len = function(s){
+				return object.parentOf(Merged, s) ? 
+					s.size
+					: Object.keys(s).length }
 			console.log(
 				object.text`
 				Tests run by %s can be of the following forms:
@@ -546,23 +551,23 @@ argv.Parser({
 					<setup>:<test>
 					<setup>:<modifier>:<test>
 
-				Setups:
+				Setups (${ len(this.setups) || '0' }):
 					${ keys(this.setups).join('\n\
 					') }
 
-				Modifiers:
+				Modifiers (${ (len(this.modifiers) - 1) || '0' }):
 					${ keys(this.modifiers)
 						.filter(function(e){ return e != '-' })
 						.join('\n\
 					') }
 
-				Tests:
+				Tests (${ (len(this.tests) - 1) || '0' }):
 					${ keys(this.tests)
 						.filter(function(e){ return e != '-' })
 						.join('\n\
 					') }
 
-				Standalone test cases:
+				Standalone test cases (${ len(this.cases) || '0' }):
 					${ keys(this.cases).join('\n\
 					') }
 				`, this.scriptName)
