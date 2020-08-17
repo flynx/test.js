@@ -266,6 +266,9 @@ object.Constructor('Merged', {
 	// 		in JS... 
 	get size(){
 		return this.keys().length },
+	get usize(){
+		var k = this.keys()
+		return k.length - (k.includes('-') ? 1 : 0) },
 
 	add: function(member){
 		this.members.push(member)
@@ -572,7 +575,7 @@ argv.Parser({
 					${ keys(this.cases).join('\n\
 					') }
 
-				Total number of tests: ${ ((a * b * (c || 1)) + d) +'' }
+				Total number of test chains: ${ ((a * b * (c || 1)) + d) +'' }
 				`, this.scriptName)
 			process.exit() }},
 
