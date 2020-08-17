@@ -6,8 +6,10 @@
 * Repo and docs:
 * 	https://github.com/flynx/test.js
 *
+*
 * TODO:
-* 	- report shadowing of tests...
+* 	- flexible test chains with 0 or more modifiers...
+*
 *
 ***********************************************/ /* c8 ignore next 2 */
 ((typeof define)[0]=='u'?function(f){module.exports=f(require)}:define)
@@ -58,6 +60,8 @@ module.VERBOSE = process ?
 	: false
 
 
+
+//---------------------------------------------------------------------
 
 //---------------------------------------------------------------------
 
@@ -246,6 +250,8 @@ var mergeIter = function(iter){
 // 		-> merged
 //
 //
+// Merged is the sum of all its members.
+//
 var Merged = 
 module.Merged =
 object.Constructor('Merged', {
@@ -266,6 +272,7 @@ object.Constructor('Merged', {
 	// 		in JS... 
 	get size(){
 		return this.keys().length },
+	// Like .size but does not count the pass-through elements...
 	get usize(){
 		var k = this.keys()
 		return k.length - (k.includes('-') ? 1 : 0) },
@@ -289,21 +296,51 @@ object.Constructor('Merged', {
 
 	toObject: function(){
 		return Object.fromEntries(this.entries()) },
+
+	//
+	//	.checkShadowing()
+	//		-> shadows
+	//
+	//	.checkShadowing(other)
+	//		-> shadows
+	//
+	checkShadowing: function(other){
+		var existing = new Set(this.keys())
+
+		other = other || this.values()
+		return (other instanceof Array ? 
+				other 
+				: [other])
+			.map(function(o){
+				return Object.keys(o)
+					.filter(function(k){
+						return existing.has(k) }) })
+   			.flat()	},
+	handleShadowing: function(shadowed){
+		shadowed.length > 0
+			&& console.warn(`  WARNING:`.bold, `shadowing: ${shadowed.join()}`)
+		return this },
 }, {
 	filename: undefined,
 
 	__init__: function(other){
+		// parse args...
 		if(arguments.length == 2){
 			var [name, func] = arguments
-			other = {[name]: func}
-		}
+			other = {[name]: func} }
 
+		// set .filename on tests...
 		var f = getCallerFilename()
 		Object.entries(Object.getOwnPropertyDescriptors(other))
 			.forEach(function([k, p]){
 				typeof(p.value) == 'function'
 					&& (p.value.filename = p.value.filename || f) })
 
+		// check for shadowing...
+		this.constructor.handleShadowing(
+			this.constructor.checkShadowing(other))
+
+		// mix and merge...
 		object.mixinFlat(this, other) 
 		this.constructor.add(this) }, 
 })

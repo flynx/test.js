@@ -31,6 +31,11 @@ tests.Setups({
 		return {} },
 })
 
+tests.Setup('setup', 
+	function(assert){ 
+		assert(false, 'setup (shadowed): assert')
+		return {} })
+
 tests.Test('dummy', 
 	function(assert, setup){
 		assert(true, 'dummy: assert') })
