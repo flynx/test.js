@@ -540,9 +540,9 @@ argv.Parser({
 					.flat() }
 			// XXX should this account for pass-through elements...
 			var len = function(s){
-				return object.parentOf(Merged, s) ? 
+				return ''+ (object.parentOf(Merged, s) ? 
 					s.size
-					: Object.keys(s).length }
+					: Object.keys(s).length) }
 			console.log(
 				object.text`
 				Tests run by %s can be of the following forms:
@@ -551,23 +551,23 @@ argv.Parser({
 					<setup>:<test>
 					<setup>:<modifier>:<test>
 
-				Setups (${ len(this.setups) || '0' }):
+				Setups (${ len(this.setups) }):
 					${ keys(this.setups).join('\n\
 					') }
 
-				Modifiers (${ (len(this.modifiers) - 1) || '0' }):
+				Modifiers (${ len(this.modifiers) - 1 + '' }):
 					${ keys(this.modifiers)
 						.filter(function(e){ return e != '-' })
 						.join('\n\
 					') }
 
-				Tests (${ (len(this.tests) - 1) || '0' }):
+				Tests (${ len(this.tests) - 1 + ''}):
 					${ keys(this.tests)
 						.filter(function(e){ return e != '-' })
 						.join('\n\
 					') }
 
-				Standalone test cases (${ len(this.cases) || '0' }):
+				Standalone test cases (${ len(this.cases) }):
 					${ keys(this.cases).join('\n\
 					') }
 				`, this.scriptName)
