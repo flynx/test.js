@@ -13,7 +13,9 @@ XXX
   - [Architecture](#architecture)
     - [Combinational testing](#combinational-testing)
     - [Unit testing](#unit-testing)
+  - [Installation](#installation)
   - [Basic usage](#basic-usage)
+  - [CLI](#cli)
   - [Components](#components)
     - [`DEFAULT_TEST_FILES`](#default_test_files)
     - [`IGNORE_TEST_FILES`](#ignore_test_files)
@@ -84,8 +86,22 @@ This makes it simple to define procedural/generative tests.
 This is the traditional self-contained test approach.
 
 
+## Installation
+
+```shell_session
+npm install -g ig-test
+```
+
+```shell_session
+npm install -i ig-test
+```
+
+
 ## Basic usage
 
+XXX script naming...
+
+Create a test script
 ```shell_session
 $ touch test.js
 $ chmod +x test.js
@@ -96,6 +112,8 @@ The code:
 #!/usr/bin/env node
 
 var test = require('ig-test')
+
+// XXX add assert examples...
 
 test.Setups({
     state: function(assert){
@@ -128,13 +146,21 @@ __filename == (require.main || {}).filename
 
 Run the tests
 ```shell_session
-$ runtests
+$ node ./test.js
 ```
 
 or
 ```shell_session
-$ node ./test.js
+$ runtests
 ```
+
+## CLI
+
+XXX help
+
+XXX chains
+
+XXX notes on coverage
 
 
 ## Components
