@@ -232,7 +232,9 @@ object.Constructor('Assert', {
 
 //---------------------------------------------------------------------
 
+// XXX
 var mergeIter = function(iter){
+	// XXX should this get a function as argument???
 	return function(c){
 		c = c || this
 		return (c.members || [])
@@ -309,7 +311,7 @@ object.Constructor('Merged', {
 	checkShadowing: function(other){
 		var existing = new Set(this.keys())
 
-		other = other || this.values()
+		other = other || this.members
 		return (other instanceof Array ? 
 				other 
 				: [other])
