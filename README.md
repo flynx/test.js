@@ -286,14 +286,16 @@ XXX
 A _subclass_ or rather _sub-constructor_ of `Merged`.
 
 Note that `Setups` and `Setup` are references to the same object, they exists 
-for better readability in cases when we add a single test or a bunch of tests, 
-e.g:
+for better readability in cases when we add a single element (`<key>`-`<func>` 
+pair) or a bunch of elements (object), for example:
 ```javascript
+// single element...
 test.Setup('some-setup', 
     function(){
         // ...
     })
 
+// arbitrary number of elements...
 test.Setups({
     'some-other-setup': function(){
         // ...
