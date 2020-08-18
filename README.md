@@ -1,6 +1,13 @@
 # test.js
 experimental test runner....
 
+- [test.js](#testjs)
+  - [Architecture](#architecture)
+    - [Combinational testing](#combinational-testing)
+    - [Unit testing](#unit-testing)
+  - [Basic usage](#basic-usage)
+
+
 ## Architecture
 
 This package implements two testing schemes:
@@ -41,3 +48,34 @@ This makes it simple to define procedural/generative tests.
 ### Unit testing
 
 This is the traditional self-contained test approach.
+
+
+## Basic usage
+
+```javascript
+var test = require('ig-test')
+
+test.Setups({
+    basic: function(assert){
+        return {
+            a: 123,
+            b: 321,
+        } },
+})
+
+test.Tests({
+    
+})
+
+
+// make the test runnable as a standalone script...
+__filename == (require.main || {}).filename
+    && tests.run()
+```
+
+```shell_session
+$ runtests
+```
+
+
+<!-- vim:set ts=4 sw=4 spell : -->

@@ -9,6 +9,8 @@
 *
 * TODO:
 * 	- flexible test chains with 0 or more modifiers...
+* 	- might be a good idea to detect test module type and run only our 
+* 		ones...
 *
 *
 ***********************************************/ /* c8 ignore next 2 */
