@@ -1,14 +1,32 @@
 # test.js
 
-Experimental test runner....
+Combinational test framework.
+
+This is not meant as a replacement for more advanced and feature-rich testing 
+frameworks, instead this is a minimalist and complete experimental implementation
+of a specific approach to testing, i.e. _combinational testing_
+
+Note, **this module is experimental** and can change quite allot within a shot to mid
+timeframe, use at your own risk, though ideas, feedback and suggestions are welcome.
 
 ## Features
 
-XXX
+- Simple / minimalist implementation
+- Supports combinational as well as unit testing paradigms
+- 
+
+
+### Planned
+
+- Multiple modifier chaining
+- Replaceable/extensible assertion library
+-  
+
 
 ## Contents
 - [test.js](#testjs)
   - [Features](#features)
+    - [Planned](#planned)
   - [Contents](#contents)
   - [Architecture](#architecture)
     - [Combinational testing](#combinational-testing)
@@ -89,11 +107,11 @@ This is the traditional self-contained test approach.
 ## Installation
 
 ```shell_session
-npm install -g ig-test
+$ npm install -g ig-test
 ```
 
 ```shell_session
-npm install -i ig-test
+$ npm install -i ig-test
 ```
 
 
@@ -156,7 +174,22 @@ $ runtests
 
 ## CLI
 
+```shell_session
+$ npm install -g ig-test
+```
+
 XXX help
+```shell_session
+$ runtests --help 
+
+```
+
+
+XXX list available test components
+```shell_session
+$ runtests --list 
+
+```
 
 XXX chains
 
