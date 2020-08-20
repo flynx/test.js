@@ -8,6 +8,7 @@
 *
 *
 * TODO:
+* 	- list found files...
 * 	- flexible test chains with 0 or more modifiers...
 * 	- might be a good idea to detect test module type and run only our 
 * 		ones...
@@ -550,6 +551,7 @@ argv.Parser({
 	// NOTE: this uses .helpColumnOffset to align origins...
 	default_files: undefined,
 
+	// XXX if we do the printing in .stop(..) this will see all the modules...
 	'-l': '-list',
 	'-list': {
 		doc: ['list available tests;',
@@ -564,6 +566,10 @@ argv.Parser({
 				&& (path != this.default_files
 					|| this.test_modules == null)
 				&& this.handle('-f', [], key, path)
+
+			// load the queued modules...
+			this.loadModule()
+
 			var offset = (this.helpColumnOffset || 3) * 8
 			// get key value...
 			var keys = function(s){
@@ -621,8 +627,52 @@ argv.Parser({
 			process.exit() }},
 
 
-	// add files/patterns...
+	// list found modules...
+	//
+	// XXX use tab size...
+	'-list-found': {
+		doc: 'like -list but print found test modules and exit',
+		arg: 'PATH',
+		handler: function(args, key, path){
+			path = path || this.default_files
+			// load path or the defaults if nothing loaded...
+			path
+				&& (path != this.default_files
+					|| this.test_modules == null)
+				&& this.handle('-f', [], key, path)
+			var modules = Object.keys(this.test_modules || {})
+			console.log([
+					`Found modules (${ modules.length+'' }):`,
+					...modules
+				// XXX use tab size...
+				].join('\n    '))
+			process.exit() }},
+
+
+	// queue files/patterns...
+	// XXX should this energetically load modules (current) or queue 
+	// 		them for later loading (on .then(..))...
+	// 		...should this be an option???
 	test_modules: undefined,
+	queueModule: function(path){
+		;(this.test_modules = this.test_modules || {})[path] = undefined
+		return this },
+	loadModule: function(path){
+		var that = this
+		path = path || Object.keys(this.test_modules || {})
+		path = path instanceof Array ?
+			path
+			: [path]
+		path
+			// do not reload modules...
+			.filter(function(path){
+				return !(that.test_modules || {})[path] })
+			.forEach(function(path){
+				console.log('Loading module:', path)
+				// XXX should we handle the load error here???
+				;(that.test_modules = that.test_modules || {})[path] = 
+					require(process.cwd() +'/'+ path.slice(0, -3)) })
+		return this },
 
 	// XXX revise error handling...
 	'-f': '-test-file',
@@ -635,7 +685,6 @@ argv.Parser({
 			return this.default_files },
 		handler: function(args, key, path){
 			var that = this
-			this.test_modules = this.test_modules || {}
 
 			;(path instanceof Array ?
 					path
@@ -654,10 +703,8 @@ argv.Parser({
 							if(!/.*\.js$/.test(path)){
 								throw argv.ParserError(
 									`${key}: only support .js modules, got: "${path}"`) }
-							console.log('Loading module:', path)
-							// XXX should we handle the load error here???
-							that.test_modules[path] = 
-								require(process.cwd() +'/'+ path.slice(0, -3)) }) }) }},
+							//that.loadModule(path) }) }) }},
+							that.queueModule(path) }) }) }},
 
 
 	// ignore paths...
@@ -688,6 +735,9 @@ argv.Parser({
 	// XXX might be a good idea to check chain syntax here...
 	'@*': undefined,
 })
+// load the modules...
+.then(function(){
+	this.loadModule() })
 
 
 

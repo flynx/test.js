@@ -107,23 +107,25 @@ This is the traditional self-contained test approach.
 ## Installation
 
 ```shell_session
-$ npm install -g ig-test
+$ npm install -i ig-test
 ```
 
+And to install the global CLI interface
 ```shell_session
-$ npm install -i ig-test
+$ npm install -g ig-test
 ```
 
 
 ## Basic usage
-
-XXX script naming...
 
 Create a test script
 ```shell_session
 $ touch test.js
 $ chmod +x test.js
 ```
+
+Note that the test script should be named either `"test.js"` or `"<something>-test.js"`
+for the system to find it automatically.
 
 The code:
 ```javascript
@@ -178,14 +180,59 @@ $ runtests
 $ npm install -g ig-test
 ```
 
-XXX help
+Basic help
 ```shell_session
 $ runtests --help 
+Usage: test.js [OPTIONS] [CHAIN] ...
 
+Run tests.
+
+Tests run by test.js can be specified in one of the 
+following formats:
+
+        <case>
+        <setup>:<test>
+        <setup>:<modifier>:<test>
+
+Each of the items in the test spec can be a "*" indicating
+that all relevant items should be used, for example:
+
+        $ ./test.js basic:*:*
+
+Here test.js is instructed to run all tests and modifiers
+only on the basic setup.
+
+Zero or more sets of tests can be specified.
+
+When no tests specified test.js will run all tests.
+
+Options:
+        -h,  --help             - print this message and exit
+        -v,  --version          - show test.js verion and exit
+        -l,  --list=PATH        - list available tests;
+                                  note that if passing files via -f explicitly they
+                                  must precede the -l/-list flag;
+                                  this has the same defaults as -f
+             --list-found=PATH  - like -list but print found test modules and exit
+        -f,  --test-file=PATH   - test script or filename pattern, supports glob;
+                                  this flag can be given multiple times for
+                                  multiple paths/patterns
+                                  (default: **/?(*-)test.js)
+        -i,  --ignore=PATH      - path/pattern to ignore in test file search
+                                  (default: node_modules/**)
+             --verbose          - verbose mode
+                                  (env: $VERBOSE)
+
+Examples:
+        $ ./test.js             - run all tests.
+        $ ./test.js basic:*:*   - run all tests and modifiers on "basic" setup.
+                                  (see test.js -l for more info)
+        $ ./test.js -v example  - run "example" test in verbose mode.
+        $ ./test.js native:gen3:methods init:gen3:methods
+                                - run two tests/patterns.
 ```
 
-
-XXX list available test components
+List available test components
 ```shell_session
 $ runtests --list 
 
