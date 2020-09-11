@@ -1,6 +1,6 @@
 {
   "name": "ig-test",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "description": "experimental test runner....",
   "main": "test.js",
   "bin": {
@@ -26,7 +26,7 @@
   "dependencies": {
     "colors": "^1.4.0",
     "glob": "^7.1.6",
-    "ig-argv": "^2.13.0",
+    "ig-argv": "^2.13.2",
     "ig-object": "^5.2.6"
   }
 }

@@ -455,28 +455,28 @@ function(spec, chain, stats){
 	chain_length != 1
 		&& object.deepKeys(tests)
 			.filter(function(t, i, l){
-				return (
+				return typeof(tests[t]) == 'function'
 					// skip blank tests if we have other tests unless 
 					// explicitly specified...
-					(t == '-' 
-						&& test != t 
-						&& l.length > 1) ?
-					false
-					: (test == '*' 
-						|| test == t) ) })
+					&& ((t == '-' 
+							&& test != t 
+							&& l.length > 1) ?
+						false
+						: (test == '*' 
+							|| test == t) ) })
 			.forEach(function(t){
 				// modifiers...
 				object.deepKeys(modifiers)
 					.filter(function(m){
-						return mod == '*' || mod == m })
+						return typeof(modifiers[m]) == 'function'
+							&& (mod == '*' || mod == m) })
 					.forEach(function(m){
 						// setups...
 						object.deepKeys(setups)
 							.filter(function(s){
-								return setup == '*' || setup == s })
+								return typeof(setups[s]) == 'function'
+									&& (setup == '*' || setup == s) })
 							.forEach(function(s){
-								if(typeof(setups[s]) != 'function'){
-									return }
 								// run the test...
 								stats.tests += 1
 								var _assert = assert.push(
@@ -492,7 +492,8 @@ function(spec, chain, stats){
 	chain_length <= 1
 		&& Object.keys(cases)
 			.filter(function(s){
-				return setup == '*' || setup == s })
+				return typeof(cases[s]) == 'function'
+					&& (setup == '*' || setup == s) })
 			.forEach(function(c){
 				stats.tests += 1
 				cases[c]( assert.push(c) ) }) 
