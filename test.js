@@ -325,6 +325,11 @@ object.Constructor('Merged', {
 		shadowed.length > 0
 			&& console.warn(`  WARNING:`.bold, `shadowing: ${shadowed.join()}`)
 		return this },
+
+	create: function(name){
+		return object.Constructor(name || this.name, this, {}) },
+	//clone: function(){
+	//},
 }, {
 	filename: undefined,
 
@@ -351,38 +356,163 @@ object.Constructor('Merged', {
 })
 
 
+
+//---------------------------------------------------------------------
+
+var TestSet =
+module.TestSet =
+object.Constructor('TestSet', {
+	// XXX make these chainable...
+	// 		...at the same time need to keep the API...
+	Setup: null,
+	setups: null,
+
+	Modifier: null,
+	modifiers: null,
+
+	Test: null,
+	tests: null,
+
+	Case: null,
+	cases: null,
+
+	__assert__: Assert,
+
+	// XXX run the local tests...
+	// XXX need to be able to use external assert...
+	// 		- from context...
+	// 		- from arg...
+	__call__: function(context, chain, stats){
+		// parse chain...
+		chain = (chain == '*' || chain == null) ?
+			[]
+			: chain
+		chain = chain instanceof Array ? 
+			chain 
+			: chain.split(/:/)
+		var chain_length = chain.length
+		var setup = chain.shift() || '*'
+		var test = chain.pop() || '*'
+		var mod = chain.pop() || '*'
+		mod = chain_length == 2 ? 
+			'as-is' 
+			: mod
+
+		// get the tests...
+		var {setups, modifiers, tests, cases} = this
+		;[setups, modifiers, tests, cases] = 
+			[setups, modifiers, tests, cases]
+				.map(function(e){
+					return object.parentOf(Merged, e) ?
+						e.toObject()
+						: (e || {}) })
+
+		// stats...
+		stats = stats || {}
+		Object.assign(stats, {
+			tests: stats.tests || 0,
+			assertions: stats.assertions || 0,
+			failures: stats.failures || 0,
+			time: stats.time || 0,
+		})
+
+		var started = Date.now()
+		// tests...
+		var assert = this.__assert__('[TEST]', stats, module.VERBOSE)
+		chain_length != 1
+			&& object.deepKeys(tests)
+				.filter(function(t, i, l){
+					return typeof(tests[t]) == 'function'
+						// skip blank tests if we have other tests unless 
+						// explicitly specified...
+						&& ((t == '-' 
+								&& test != t 
+								&& l.length > 1) ?
+							false
+							: (test == '*' 
+								|| test == t) ) })
+				.forEach(function(t){
+					// modifiers...
+					object.deepKeys(modifiers)
+						.filter(function(m){
+							return typeof(modifiers[m]) == 'function'
+								&& (mod == '*' || mod == m) })
+						.forEach(function(m){
+							// setups...
+							object.deepKeys(setups)
+								.filter(function(s){
+									return typeof(setups[s]) == 'function'
+										&& (setup == '*' || setup == s) })
+								.forEach(function(s){
+									// run the test...
+									stats.tests += 1
+									var _assert = assert.push(
+										[s, m, t]
+											// do not print blank pass-through ('-') 
+											// components...
+											.filter(function(e){ return e != '-' }) )
+									tests[t](_assert, 
+										modifiers[m](_assert, 
+											setups[s](_assert))) }) }) }) 
+		// cases...
+		var assert = this.__assert__('[CASE]', stats, module.VERBOSE)
+		chain_length <= 1
+			&& Object.keys(cases)
+				.filter(function(s){
+					return typeof(cases[s]) == 'function'
+						&& (setup == '*' || setup == s) })
+				.forEach(function(c){
+					stats.tests += 1
+					cases[c]( assert.push(c) ) }) 
+		// runtime...
+		stats.time += Date.now() - started
+		return stats },
+
+	// XXX add assert arg...
+	__init__: function(){
+		this.Setup = 
+			this.setups = 
+				Merged.create('Setups')
+		this.Modifier = 
+			this.modifiers = 
+				Merged.create('Modifiers')
+					// default blank pass-through...
+					// NOTE: we need at least one modifier and at least 
+					// 		one test for the system to run....
+					.add({ '-': function(_, s){ return s }})
+		this.Test = 
+			this.tests = 
+				Merged.create('Tests')
+					// default blank pass-through...
+					// NOTE: we need at least one modifier and at least 
+					// 		one test for the system to run....
+					.add({ '-': function(_, s){ return s }})
+		this.Case = 
+			this.cases = 
+				Merged.create('Cases') },
+})
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-var Setups = 
+// XXX rename to runner...
+module.BASE_TEST_SET = new TestSet()
+
 module.Setup =
-module.Setups =
-object.Constructor('Setups', Merged, {})
+module.Setups = 
+	module.BASE_TEST_SET.Setup
 
-
-var Modifiers = 
 module.Modifier =
-module.Modifiers =
-object.Constructor('Modifiers', Merged, {})
-	// default blank pass-through...
-	// NOTE: we need at least one modifier and at least one test for the 
-	// 		system to run....
-	.add({ '-': function(_, s){ return s }})
+module.Modifiers = 
+	module.BASE_TEST_SET.Modifier
 
-
-var Tests = 
 module.Test =
-module.Tests =
-object.Constructor('Tests', Merged, {})
-	// default blank pass-through...
-	// NOTE: we need at least one modifier and at least one test for the 
-	// 		system to run....
-	.add({ '-': function(_, s){ return s }})
+module.Tests = 
+	module.BASE_TEST_SET.Test
 
-
-var Cases = 
 module.Case =
-module.Cases =
-object.Constructor('Cases', Merged, {})
+module.Cases = 
+	module.BASE_TEST_SET.Case
 
 
 
@@ -787,10 +917,10 @@ function(default_files, tests){
 	var stats = {}
 	var tests = tests 
 		|| {
-			setups: Setups,
-			modifiers: Modifiers,
-			tests: Tests,
-			cases: Cases,
+			setups: module.Setups,
+			modifiers: module.Modifiers,
+			tests: module.Tests,
+			cases: module.Cases,
 		}
 	var p = Object.assign(
 		Object.create(parser), 
