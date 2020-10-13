@@ -41,6 +41,14 @@ tests.Test('dummy',
 		assert(true, 'dummy: assert') })
 
 
+// a nested test set...
+tests.Case('nested', 
+	tests.TestSet(function(){
+		this.Case('moo', function(assert){
+			assert(true, 'nested dummy: assert') })
+	}))
+
+
 
 //---------------------------------------------------------------------
 typeof(__filename) != 'undefined'

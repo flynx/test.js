@@ -381,7 +381,15 @@ object.Constructor('TestSet', {
 	// XXX need to be able to use external assert...
 	// 		- from context...
 	// 		- from arg...
+	// XXX nested assert(..) need to report nestedness correctly...
 	__call__: function(context, chain, stats){
+		var assert
+		// running nested...
+		if(typeof(chain) == 'function'){
+			assert = chain
+			chain = null 
+			stats = stats 
+				|| assert.stats }
 		// parse chain...
 		chain = (chain == '*' || chain == null) ?
 			[]
@@ -417,7 +425,9 @@ object.Constructor('TestSet', {
 
 		var started = Date.now()
 		// tests...
-		var assert = this.__assert__('[TEST]', stats, module.VERBOSE)
+		// XXX revise nested assert...
+		var assert = assert 
+			|| this.__assert__('[TEST]', stats, module.VERBOSE)
 		chain_length != 1
 			&& object.deepKeys(tests)
 				.filter(function(t, i, l){
@@ -454,7 +464,9 @@ object.Constructor('TestSet', {
 										modifiers[m](_assert, 
 											setups[s](_assert))) }) }) }) 
 		// cases...
-		var assert = this.__assert__('[CASE]', stats, module.VERBOSE)
+		// XXX revise nested assert...
+		assert = assert 
+			|| this.__assert__('[CASE]', stats, module.VERBOSE)
 		chain_length <= 1
 			&& Object.keys(cases)
 				.filter(function(s){
@@ -467,8 +479,8 @@ object.Constructor('TestSet', {
 		stats.time += Date.now() - started
 		return stats },
 
-	// XXX add assert arg...
-	__init__: function(){
+	__init__: function(func){
+		// test collections...
 		this.Setup = 
 			this.setups = 
 				Merged.create('Setups')
@@ -488,7 +500,10 @@ object.Constructor('TestSet', {
 					.add({ '-': function(_, s){ return s }})
 		this.Case = 
 			this.cases = 
-				Merged.create('Cases') },
+				Merged.create('Cases') 
+		// init...
+		func
+			&& func.call(this) },
 })
 
 
@@ -542,6 +557,8 @@ module.Cases =
 // XXX chain N modifiers...
 // XXX make Assert optional...
 // XXX is this a good name???
+//* XXX do we need a root runner???
+//		...if not then need to cleanup run(..) to use TestSet / BASE_TEST_SET...
 var runner = 
 module.runner =
 function(spec, chain, stats){
@@ -629,6 +646,7 @@ function(spec, chain, stats){
 	// runtime...
 	stats.time += Date.now() - started
 	return stats }
+//*/
 
 
 
