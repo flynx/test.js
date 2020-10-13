@@ -37,7 +37,8 @@ timeframe, use at your own risk, though ideas, feedback and suggestions are welc
   - [Components](#components)
     - [`DEFAULT_TEST_FILES`](#default_test_files)
     - [`IGNORE_TEST_FILES`](#ignore_test_files)
-    - [`Merged(..)`](#merged)
+    - [`Merged`](#merged)
+      - [`<merged>.create(..)`](#mergedcreate)
       - [`<merged>.members`](#mergedmembers)
       - [`<merged>.size` / `<merged>.usize`](#mergedsize--mergedusize)
       - [`<merged>.add(..)` / `<merged>.remove(..)`](#mergedadd--mergedremove)
@@ -47,6 +48,8 @@ timeframe, use at your own risk, though ideas, feedback and suggestions are welc
       - [`<merged>.checkShadowing(..)`](#mergedcheckshadowing)
       - [`<merged>.handleShadowing(..)`](#mergedhandleshadowing)
       - [`<member>.filename`](#memberfilename)
+    - [`TestSet`](#testset)
+    - [`BASE_TEST_SET`](#base_test_set)
     - [`Setups(..)` / `Setup(..)` (Merged)](#setups--setup-merged)
     - [`Modifiers(..)` / `Modifier(..)` (Merged)](#modifiers--modifier-merged)
     - [`Tests(..)` / `Test(..)` (Merged)](#tests--test-merged)
@@ -270,14 +273,22 @@ IGNORE_TEST_FILES =
 Default value: `['node_modules/**']`
 
 
-### `Merged(..)`
+### `Merged`
 
 Implements a _merged_ collection of instances (_members_).
+
+Create a new collection:
 ```
-Merged({ <key>: <func>, .. })
+Merged.create(<name>)
+    -> <merged>
+```
+
+Add members to collection:
+```
+<merged>({ <key>: <func>, .. })
     -> <member>
 
-Merged(<key>, <func>)
+<merged>(<key>, <func>)
     -> <member>
 ```
 
@@ -290,6 +301,19 @@ added into `.members`)
 Provides a set of methods and properties to access/introspect the _merged_ 
 (hence the name) attributes of the _members_ (i.e. `.keys(..)`, `.values(..)`, 
 `.entries(..)`, `.size`/`.usize` and `.members`).
+
+Note that though `Merged` itself is a collection, it is not designed to be used 
+directly as a collection, use it to create new collections or as a prototype for
+inheritance.
+
+
+#### `<merged>.create(..)`
+
+Create a new `Merged` collection (member constructor).
+```
+Merged.create(<name>)
+    -> <merged>
+```
 
 
 #### `<merged>.members`
@@ -383,6 +407,16 @@ user to react to _shadowing_ in a different manner.
 #### `<member>.filename`
 
 The filename where the `<member>` was defined.
+
+
+### `TestSet`
+
+XXX
+
+
+### `BASE_TEST_SET`
+
+XXX
 
 
 ### `Setups(..)` / `Setup(..)` (Merged)

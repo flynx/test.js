@@ -257,6 +257,7 @@ var mergeIter = function(iter){
 //
 // Merged is the sum of all its members.
 //
+// XXX is this generic enough to be moved to ig-types???
 var Merged = 
 module.Merged =
 object.Constructor('Merged', {
@@ -328,8 +329,6 @@ object.Constructor('Merged', {
 
 	create: function(name){
 		return object.Constructor(name || this.name, this, {}) },
-	//clone: function(){
-	//},
 }, {
 	filename: undefined,
 
