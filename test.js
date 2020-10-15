@@ -375,6 +375,16 @@ object.Constructor('TestSet', {
 	Case: null,
 	cases: null,
 
+	// merge one or more test sets as cases...
+	//
+	// 	.merge({ <name>: <test-set>, .. })
+	// 		-> this
+	//
+	// XXX do we need this as a proxy to .Cases???
+	merge: function(){
+		this.cases(...arguments)
+		return this },
+
 	__assert__: Assert,
 
 	// XXX run the local tests...
@@ -382,6 +392,8 @@ object.Constructor('TestSet', {
 	// 		- from context...
 	// 		- from arg...
 	// XXX nested assert(..) need to report nestedness correctly...
+	// XXX should/can this return a meaningfull result for it to be used
+	// 		as a setup/mod???
 	__call__: function(context, chain, stats){
 		var assert
 		// running nested...
@@ -528,6 +540,11 @@ module.Tests =
 module.Case =
 module.Cases = 
 	module.BASE_TEST_SET.Case
+
+
+// XXX this is just a proxy to Cases(..), do we need it?
+module.merge =
+	module.BASE_TEST_SET.merge
 
 
 
