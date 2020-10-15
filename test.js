@@ -502,6 +502,7 @@ object.Constructor('TestSet', {
 			this.cases = 
 				Merged.create('Cases') 
 		// init...
+		// XXX should this also get assert???
 		func
 			&& func.call(this) },
 })
