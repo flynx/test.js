@@ -375,19 +375,8 @@ object.Constructor('TestSet', {
 	Case: null,
 	cases: null,
 
-	// merge one or more test sets as cases...
-	//
-	// 	.merge({ <name>: <test-set>, .. })
-	// 		-> this
-	//
-	// XXX do we need this as a proxy to .Cases???
-	merge: function(){
-		this.cases(...arguments)
-		return this },
-
 	__assert__: Assert,
 
-	// XXX run the local tests...
 	// XXX need to be able to use external assert...
 	// 		- from context...
 	// 		- from arg...
