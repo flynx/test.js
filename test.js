@@ -186,7 +186,7 @@ object.Constructor('Assert', {
 
 	// assertion API...
 	__call__: function(_, value, msg, ...args){
-		msg = msg || ''
+		msg = msg || (value + '')
 		// stats...
 		var stats = this.stats
 		stats.assertions = (stats.assertions || 0) + 1
