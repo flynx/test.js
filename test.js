@@ -621,55 +621,66 @@ async function(spec, chain, stats){
 
 	var started = Date.now()
 	// tests...
+	var queue = 
+		chain_length != 1 ?
+			object.deepKeys(tests)
+				.filter(function(t, i, l){
+					return typeof(tests[t]) == 'function'
+						// skip blank tests if we have other tests unless 
+						// explicitly specified...
+						&& ((t == '-' 
+								&& test != t 
+								&& l.length > 1) ?
+							false
+							: (test == '*' 
+								|| test == t) ) })
+				.map(function(t){
+					// modifiers...
+					return object.deepKeys(modifiers)
+						.filter(function(m){
+							return typeof(modifiers[m]) == 'function'
+								&& (mod == '*' || mod == m) })
+						.map(function(m){
+							// setups...
+							return object.deepKeys(setups)
+								.filter(function(s){
+									return typeof(setups[s]) == 'function'
+										&& (setup == '*' || setup == s) })
+								.map(function(s){
+									return [s, m, t] }) }) })
+				.flat(2)
+			: []
+	// run the test queue...
+	// NOTE: we are not running these via .map(..) to keep things in 
+	// 		sequence...
 	var assert = Assert('[TEST]', stats, module.VERBOSE)
-	chain_length != 1
-		&& await Promise.all(object.deepKeys(tests)
-			.filter(function(t, i, l){
-				return typeof(tests[t]) == 'function'
-					// skip blank tests if we have other tests unless 
-					// explicitly specified...
-					&& ((t == '-' 
-							&& test != t 
-							&& l.length > 1) ?
-						false
-						: (test == '*' 
-							|| test == t) ) })
-			.map(function(t){
-				// modifiers...
-				return object.deepKeys(modifiers)
-					.filter(function(m){
-						return typeof(modifiers[m]) == 'function'
-							&& (mod == '*' || mod == m) })
-					.map(function(m){
-						// setups...
-						return object.deepKeys(setups)
-							.filter(function(s){
-								return typeof(setups[s]) == 'function'
-									&& (setup == '*' || setup == s) })
-							.map(async function(s){
-								// run the test...
-								stats.tests += 1
-								var _assert = assert.push(
-									[s, m, t]
-										// do not print blank pass-through ('-') 
-										// components...
-										.filter(function(e){ return e != '-' }) )
-								return tests[t](
-									_assert, 
-									await modifiers[m](
-										_assert, 
-										await setups[s](_assert))) }) }) })
-			.flat(Infinity))
+	for(var [s, m, t] of queue){
+		// run the test...
+		stats.tests += 1
+		var _assert = assert.push(
+			[s, m, t]
+				// do not print blank pass-through ('-') 
+				// components...
+				.filter(function(e){ return e != '-' }) )
+		await tests[t](
+			_assert, 
+			await modifiers[m](
+				_assert, 
+				await setups[s](_assert))) }
+
 	// cases...
+	var queue = 
+		chain_length <= 1 ?
+			Object.keys(cases)
+				.filter(function(s){
+					return typeof(cases[s]) == 'function'
+						&& (setup == '*' || setup == s) })
+			: []
 	var assert = Assert('[CASE]', stats, module.VERBOSE)
-	chain_length <= 1
-		&& await Promise.all(Object.keys(cases)
-			.filter(function(s){
-				return typeof(cases[s]) == 'function'
-					&& (setup == '*' || setup == s) })
-			.map(function(c){
-				stats.tests += 1
-				return cases[c]( assert.push(c) ) }))
+	for(var c of queue){
+		stats.tests += 1
+		await cases[c]( assert.push(c) ) }
+
 	// runtime...
 	stats.time += Date.now() - started
 	return stats }

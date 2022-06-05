@@ -28,9 +28,8 @@ tests.Setups({
 		return {setup: 'setup2'} },
 	async: async function(assert){
 		assert(true, 'setup')
-		return {setup: 'async'} },
+		return await {setup: 'async'} },
 })
-
 
 tests.Modifiers({
 	sync: function(assert, setup){
@@ -40,7 +39,14 @@ tests.Modifiers({
 	async: async function(assert, setup){
 		assert(setup, 'modifier')
 		setup.mod = 'async'
-		return setup },
+		return await setup },
+})
+
+tests.Tests({
+	async: async function(assert, setup){
+		assert(setup, 'test')
+		await setup
+		assert.log(setup) },
 })
 
 
@@ -55,12 +61,6 @@ tests.Test('basic',
 		assert.log(setup)
 	})
 
-tests.Tests({
-	async: async function(assert, setup){
-		assert(setup, 'test')
-		assert.log(setup)
-	},
-})
 
 // a nested test set...
 tests.Case('nested', 
