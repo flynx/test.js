@@ -46,7 +46,9 @@ tests.Tests({
 	async: async function(assert, setup){
 		assert(setup, 'test')
 		await setup
-		assert.log(setup) },
+		assert.log(setup) 
+		assert(setup, 'done')
+	},
 })
 
 
@@ -61,12 +63,33 @@ tests.Test('basic',
 		assert.log(setup)
 	})
 
+tests.Case('async-completion',
+   async function(assert){
+		assert(true, 'start') 
+		await assert(true, '1') 
+		await assert(true, '2') 
+		await assert(true, '3') 
+		assert(true, 'done') 
+   })	
 
 // a nested test set...
 tests.Case('nested', 
 	tests.TestSet(function(){
-		this.Case('moo', function(assert){
-			assert(true, 'nested dummy: assert') })
+		// XXX these can behave in an odd manner...
+		// 			$ ./test.js nested --verbose
+		// 		will prin the output of the sunc test while the async 
+		// 		is waiting...
+		// 		...not yet sure how to sequence these in a more predictable 
+		// 		manner...
+		// 		...this only affects output sequencing and not the actual 
+		// 		execution flow...
+		this.Case('async', async function(assert){
+			assert(true, 'nested async: assert') 
+			await 123
+			assert(true, 'nested async: done') })
+
+		this.Case('sync', function(assert){
+			assert(true, 'nested sync: assert') })
 	}))
 
 

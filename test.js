@@ -559,12 +559,12 @@ module.merge =
 //
 // 	runner(spec)
 // 	runner(spec, '*')
-// 		-> stats
+// 		-> promise(stats)
 //
 // 	runner(spec, 'case')
 // 	runner(spec, 'setup:test')
 // 	runner(spec, 'setup:mod:test')
-// 		-> stats
+// 		-> promise(stats)
 //
 //
 // This will run 
@@ -650,7 +650,6 @@ async function(spec, chain, stats){
 									return [s, m, t] }) }) })
 				.flat(2)
 			: []
-	// run the test queue...
 	// NOTE: we are not running these via .map(..) to keep things in 
 	// 		sequence...
 	var assert = Assert('[TEST]', stats, module.VERBOSE)
@@ -661,7 +660,8 @@ async function(spec, chain, stats){
 			[s, m, t]
 				// do not print blank pass-through ('-') 
 				// components...
-				.filter(function(e){ return e != '-' }) )
+				.filter(function(e){ 
+					return e != '-' }) )
 		await tests[t](
 			_assert, 
 			await modifiers[m](
@@ -674,12 +674,13 @@ async function(spec, chain, stats){
 			Object.keys(cases)
 				.filter(function(s){
 					return typeof(cases[s]) == 'function'
-						&& (setup == '*' || setup == s) })
+						&& (setup == '*' 
+							|| setup == s) })
 			: []
 	var assert = Assert('[CASE]', stats, module.VERBOSE)
 	for(var c of queue){
 		stats.tests += 1
-		await cases[c]( assert.push(c) ) }
+		await cases[c](assert.push(c)) }
 
 	// runtime...
 	stats.time += Date.now() - started
@@ -952,7 +953,7 @@ argv.Parser({
 //
 var run =
 module.run =
-async function(default_files, tests){
+function(default_files, tests){
 	// parse args -- run(tests)...
 	if(!(default_files instanceof Array 
 			|| typeof(default_files) == typeof('str'))){
@@ -988,11 +989,11 @@ async function(default_files, tests){
 		// XXX should this be generic???
 		.then(async function(chains){
 			// run the tests...
-			await (chains.length > 0 ?
-				Promise.all(chains
-					.map(function(chain){
-						return runner(tests, chain, stats) }))
-				: runner(tests, '*', stats))
+			if(chains.length > 0){
+				for(var chain of chains){
+					await runner(tests, chain, stats) }
+			} else {
+				await runner(tests, '*', stats) }
 
 			// print stats...
 			console.log(
@@ -1002,8 +1003,7 @@ async function(default_files, tests){
 				`  (${stats.time}ms)`.bold.black) 
 
 			// report error status to the OS...
-			process.exit(stats.failures)
-		})
+			process.exit(stats.failures) })
 		.call() }
 
 
