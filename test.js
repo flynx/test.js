@@ -227,6 +227,16 @@ object.Constructor('Assert', {
 		return this(arrayCmp(value, expected), 
 			msg +':', 'expected:', expected, 'got:', value) },
 
+	// output...
+	log: function(...args){
+		this.verbose
+			&& console.log('\t', ...args) },
+	warn: function(...args){
+		this.verbose
+			&& console.warn('\t', ...args) },
+	error: function(...args){
+		console.error('\t', ...args) },
+
 	__init__: function(path, stats, verbose){
 		this.path = path instanceof Array ? 
 			path 
@@ -575,7 +585,7 @@ module.merge =
 //		...if not then need to cleanup run(..) to use TestSet / BASE_TEST_SET...
 var runner = 
 module.runner =
-function(spec, chain, stats){
+async function(spec, chain, stats){
 	// parse chain...
 	chain = (chain == '*' || chain == null) ?
 		[]
@@ -613,7 +623,7 @@ function(spec, chain, stats){
 	// tests...
 	var assert = Assert('[TEST]', stats, module.VERBOSE)
 	chain_length != 1
-		&& object.deepKeys(tests)
+		&& await Promise.all(object.deepKeys(tests)
 			.filter(function(t, i, l){
 				return typeof(tests[t]) == 'function'
 					// skip blank tests if we have other tests unless 
@@ -624,19 +634,19 @@ function(spec, chain, stats){
 						false
 						: (test == '*' 
 							|| test == t) ) })
-			.forEach(function(t){
+			.map(function(t){
 				// modifiers...
-				object.deepKeys(modifiers)
+				return object.deepKeys(modifiers)
 					.filter(function(m){
 						return typeof(modifiers[m]) == 'function'
 							&& (mod == '*' || mod == m) })
-					.forEach(function(m){
+					.map(function(m){
 						// setups...
-						object.deepKeys(setups)
+						return object.deepKeys(setups)
 							.filter(function(s){
 								return typeof(setups[s]) == 'function'
 									&& (setup == '*' || setup == s) })
-							.forEach(function(s){
+							.map(async function(s){
 								// run the test...
 								stats.tests += 1
 								var _assert = assert.push(
@@ -644,19 +654,22 @@ function(spec, chain, stats){
 										// do not print blank pass-through ('-') 
 										// components...
 										.filter(function(e){ return e != '-' }) )
-								tests[t](_assert, 
-									modifiers[m](_assert, 
-										setups[s](_assert))) }) }) }) 
+								return tests[t](
+									_assert, 
+									await modifiers[m](
+										_assert, 
+										await setups[s](_assert))) }) }) })
+			.flat(Infinity))
 	// cases...
 	var assert = Assert('[CASE]', stats, module.VERBOSE)
 	chain_length <= 1
-		&& Object.keys(cases)
+		&& await Promise.all(Object.keys(cases)
 			.filter(function(s){
 				return typeof(cases[s]) == 'function'
 					&& (setup == '*' || setup == s) })
-			.forEach(function(c){
+			.map(function(c){
 				stats.tests += 1
-				cases[c]( assert.push(c) ) }) 
+				return cases[c]( assert.push(c) ) }))
 	// runtime...
 	stats.time += Date.now() - started
 	return stats }
@@ -928,7 +941,7 @@ argv.Parser({
 //
 var run =
 module.run =
-function(default_files, tests){
+async function(default_files, tests){
 	// parse args -- run(tests)...
 	if(!(default_files instanceof Array 
 			|| typeof(default_files) == typeof('str'))){
@@ -962,13 +975,13 @@ function(default_files, tests){
 
 	return p
 		// XXX should this be generic???
-		.then(function(chains){
+		.then(async function(chains){
 			// run the tests...
-			chains.length > 0 ?
-				chains
-					.forEach(function(chain){
-						runner(tests, chain, stats) })
-				: runner(tests, '*', stats)
+			await (chains.length > 0 ?
+				Promise.all(chains
+					.map(function(chain){
+						return runner(tests, chain, stats) }))
+				: runner(tests, '*', stats))
 
 			// print stats...
 			console.log(

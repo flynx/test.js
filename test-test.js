@@ -19,27 +19,48 @@ var tests = require('./test')
 
 tests.Setup('setup', 
 	function(assert){ 
-		assert(true, 'setup: assert')
-		return {} })
+		assert(true, 'setup')
+		return {setup: 'setup'} })
 
 tests.Setups({
 	setup2: function(assert){
-		assert(true, 'setup2: assert')
-		return {} },
-	setup3: function(assert){
-		assert(true, 'setup3: assert')
-		return {} },
+		assert(true, 'setup')
+		return {setup: 'setup2'} },
+	async: async function(assert){
+		assert(true, 'setup')
+		return {setup: 'async'} },
 })
+
+
+tests.Modifiers({
+	sync: function(assert, setup){
+		assert(setup, 'modifier')
+		setup.mod = 'sync'
+		return setup },
+	async: async function(assert, setup){
+		assert(setup, 'modifier')
+		setup.mod = 'async'
+		return setup },
+})
+
 
 tests.Setup('setup', 
 	function(assert){ 
 		assert(false, 'setup (shadowed): assert')
 		return {} })
 
-tests.Test('dummy', 
+tests.Test('basic', 
 	function(assert, setup){
-		assert(true, 'dummy: assert') })
+		assert(setup, 'test') 
+		assert.log(setup)
+	})
 
+tests.Tests({
+	async: async function(assert, setup){
+		assert(setup, 'test')
+		assert.log(setup)
+	},
+})
 
 // a nested test set...
 tests.Case('nested', 
@@ -47,6 +68,7 @@ tests.Case('nested',
 		this.Case('moo', function(assert){
 			assert(true, 'nested dummy: assert') })
 	}))
+
 
 
 
