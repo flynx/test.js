@@ -64,13 +64,32 @@ tests.Test('basic',
 	})
 
 tests.Case('async-completion',
-   async function(assert){
+	async function(assert){
 		assert(true, 'start') 
 		await assert(true, '1') 
 		await assert(true, '2') 
 		await assert(true, '3') 
 		assert(true, 'done') 
-   })	
+	})	
+
+tests.Case('async-completion-nested',
+	tests.TestSet(function(){
+		this.Setup({
+			empty: function(){
+				return true
+			},
+		})
+		// XXX if this is the last test we will not do all the assertions...
+		this.Test('test', async function(assert){
+			assert(true, 'start') 
+			await assert(true, '1') 
+			await assert(true, '2') 
+			await assert(true, '3') 
+			await assert(true, '4') 
+			await assert(true, '5') 
+			assert(true, 'done') 
+		})
+	}))
 
 // a nested test set...
 tests.Case('nested', 

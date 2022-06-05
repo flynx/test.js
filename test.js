@@ -400,7 +400,8 @@ object.Constructor('TestSet', {
 	// XXX nested assert(..) need to report nestedness correctly...
 	// XXX should/can this return a meaningfull result for it to be used
 	// 		as a setup/mod???
-	__call__: function(context, chain, stats){
+	// XXX this is very similar to runner(..)...
+	__call__: async function(context, chain, stats){
 		var assert
 		// running nested...
 		if(typeof(chain) == 'function'){
@@ -446,53 +447,58 @@ object.Constructor('TestSet', {
 		// XXX revise nested assert...
 		var assert = assert 
 			|| this.__assert__('[TEST]', stats, module.VERBOSE)
-		chain_length != 1
-			&& object.deepKeys(tests)
-				.filter(function(t, i, l){
-					return typeof(tests[t]) == 'function'
-						// skip blank tests if we have other tests unless 
-						// explicitly specified...
-						&& ((t == '-' 
-								&& test != t 
-								&& l.length > 1) ?
-							false
-							: (test == '*' 
-								|| test == t) ) })
-				.forEach(function(t){
-					// modifiers...
-					object.deepKeys(modifiers)
-						.filter(function(m){
-							return typeof(modifiers[m]) == 'function'
-								&& (mod == '*' || mod == m) })
-						.forEach(function(m){
-							// setups...
-							object.deepKeys(setups)
-								.filter(function(s){
-									return typeof(setups[s]) == 'function'
-										&& (setup == '*' || setup == s) })
-								.forEach(function(s){
-									// run the test...
-									stats.tests += 1
-									var _assert = assert.push(
-										[s, m, t]
-											// do not print blank pass-through ('-') 
-											// components...
-											.filter(function(e){ return e != '-' }) )
-									tests[t](_assert, 
-										modifiers[m](_assert, 
-											setups[s](_assert))) }) }) }) 
+		var queue = 
+			chain_length != 1 ?
+				object.deepKeys(tests)
+					.filter(function(t, i, l){
+						return typeof(tests[t]) == 'function'
+							// skip blank tests if we have other tests unless 
+							// explicitly specified...
+							&& ((t == '-' 
+									&& test != t 
+									&& l.length > 1) ?
+								false
+								: (test == '*' 
+									|| test == t) ) })
+					.map(function(t){
+						// modifiers...
+						return object.deepKeys(modifiers)
+							.filter(function(m){
+								return typeof(modifiers[m]) == 'function'
+									&& (mod == '*' || mod == m) })
+							.map(function(m){
+								// setups...
+								return object.deepKeys(setups)
+									.filter(function(s){
+										return typeof(setups[s]) == 'function'
+											&& (setup == '*' || setup == s) })
+									.map(function(s){
+										return [s, m, t] }) }) }) 
+					.flat(2)
+				: []
+			for(var [s, m, t] of queue){
+				stats.tests += 1
+				var _assert = assert.push(
+					[s, m, t]
+						// do not print blank pass-through ('-') 
+						// components...
+						.filter(function(e){ return e != '-' }) )
+				await tests[t](_assert, 
+					await modifiers[m](_assert, 
+						await setups[s](_assert))) }
 		// cases...
-		// XXX revise nested assert...
 		assert = assert 
 			|| this.__assert__('[CASE]', stats, module.VERBOSE)
-		chain_length <= 1
-			&& Object.keys(cases)
-				.filter(function(s){
-					return typeof(cases[s]) == 'function'
-						&& (setup == '*' || setup == s) })
-				.forEach(function(c){
-					stats.tests += 1
-					cases[c]( assert.push(c) ) }) 
+		var queue =
+			chain_length <= 1 ?
+				Object.keys(cases)
+					.filter(function(s){
+						return typeof(cases[s]) == 'function'
+							&& (setup == '*' || setup == s) })
+				: []
+		for(var c of queue){
+			stats.tests += 1
+			cases[c](assert.push(c)) }
 		// runtime...
 		stats.time += Date.now() - started
 		return stats },
@@ -610,7 +616,7 @@ async function(spec, chain, stats){
 					e.toObject()
 					: (e || {}) })
 
-	// stats...
+	// setup stats...
 	stats = stats || {}
 	Object.assign(stats, {
 		tests: stats.tests || 0,
@@ -994,6 +1000,9 @@ function(default_files, tests){
 					await runner(tests, chain, stats) }
 			} else {
 				await runner(tests, '*', stats) }
+
+			// XXX BUG for some reason we can get here BEFORE all the 
+			// 		tests are finished -- forgot to await'ing something???
 
 			// print stats...
 			console.log(
