@@ -105,17 +105,27 @@ function(){
 
 // compare two arrays by items...
 // XXX this is defined in object.js/test.js and here, need to chose one...
-var arrayCmp = function(a, b){
-	var ka = Object.keys(a)
-	var kb = Object.keys(b)
-	return a === b
-		|| (a.length == b.length
-			&& ka
-				// keep only non matching stuff...
-				.filter(function(k){
-					return a[k] !== b[k] 
-						&& a[k] != b[k] })
-				.length == 0) }
+var arrayCmp = 
+module.arrayCmp =
+function(a, b){
+	if(a === b){
+		return true }
+	if(a.length != b.length){
+		return false }
+	// check elements...
+	for(var [i, e] of Object.entries(a)){
+		// XXX not sure how strict should we be here???
+		//if(typeof(e) !== typeof(b[i])){
+		if(e.constructor !== b[i].constructor){
+			return false }
+		if(e instanceof Array){
+			if(arrayCmp(e, b[i])){
+				continue }
+			return false }
+		if(e !== b[i] 
+				&& e != b[i]){
+			return false } }
+	return true }
 
 
 // Assert constructor...
