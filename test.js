@@ -235,7 +235,9 @@ object.Constructor('Assert', {
 	array: function(value, expected, msg){
 		msg = msg || ''
 		return this(arrayCmp(value, expected), 
-			msg +':', 'expected:', expected, 'got:', value) },
+			msg +':', 
+				'\n  expected:', expected, 
+				'\n       got:', value) },
 
 	// output...
 	log: function(...args){
