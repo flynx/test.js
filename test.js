@@ -114,7 +114,7 @@ var arrayCmp = function(a, b){
 				// keep only non matching stuff...
 				.filter(function(k){
 					return a[k] !== b[k] 
-						&& a[k] != a[k] })
+						&& a[k] != b[k] })
 				.length == 0) }
 
 
