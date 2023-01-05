@@ -107,7 +107,7 @@ function(){
 // XXX this is defined in object.js/test.js and here, need to chose one...
 var arrayCmp = function(a, b){
 	var ka = Object.keys(a)
-	var kb = Object.keys(a)
+	var kb = Object.keys(b)
 	return a === b
 		|| (a.length == b.length
 			&& ka
@@ -998,8 +998,10 @@ function(default_files, tests){
 			if(chains.length > 0){
 				for(var chain of chains){
 					await runner(tests, chain, stats) }
+					//await module.BASE_TEST_SET(tests, chain, stats) }
 			} else {
 				await runner(tests, '*', stats) }
+				//await module.BASE_TEST_SET(tests, '*', stats) }
 
 			// XXX BUG for some reason we can get here BEFORE all the 
 			// 		tests are finished -- forgot to await'ing something???
