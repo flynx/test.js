@@ -614,9 +614,12 @@ async function(spec, chain, stats, mod_chain_length=1){
 	var chain_length = chain.length
 	var setup = chain.shift() || '*'
 	var test = chain.pop() || '*'
-	var mod = chain.pop() || '*'
+	var mod = chain || '*'
 	mod = chain_length == 2 ? 
-		'as-is' 
+			'as-is' 
+		: mod.length == 1 
+				&& mod[0] == '*' ?
+			'*'
 		: mod
 
 	// get the tests...
@@ -651,25 +654,27 @@ async function(spec, chain, stats, mod_chain_length=1){
 						false
 						: (test == '*' 
 							|| test == t) ) })
-	if(mod_chain_length <= 0){
-		var mod_queue = []
-	} else {
-		var mod_queue = object.deepKeys(modifiers)
-			.filter(function(m){
-				return typeof(modifiers[m]) == 'function'
-					&& (mod == '*' || mod == m) })
-			.map(function(m){
-				return [m] })
-		// modifier chains...
-		for(var i=1; i < mod_chain_length; i++){
-			mod_queue = [
-				...mod_queue,
-				...mod_queue
-					.map(function(m){
-						return mod_queue
-							.map(function(mm){
-								return [...m, ...mm] }) })
-					.flat()] } }
+	var mod_queue = []
+	if(mod_chain_length > 0){
+		if(mod instanceof Array){
+			mod_queue = [mod]
+		} else {
+			mod_queue = object.deepKeys(modifiers)
+				.filter(function(m){
+					return typeof(modifiers[m]) == 'function'
+						&& (mod == '*' || mod == m) })
+				.map(function(m){
+					return [m] })
+			// modifier chains...
+			for(var i=1; i < mod_chain_length; i++){
+				mod_queue = [
+					...mod_queue,
+					...mod_queue
+						.map(function(m){
+							return mod_queue
+								.map(function(mm){
+									return [...m, ...mm] }) })
+						.flat()] } } }
 	var setup_queue = object.deepKeys(setups) 
 		.filter(function(s){
 			return typeof(setups[s]) == 'function'
