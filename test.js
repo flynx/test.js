@@ -679,15 +679,20 @@ async function(spec, chain, stats, mod_chain_length=1){
 		.filter(function(s){
 			return typeof(setups[s]) == 'function'
 				&& (setup == '*' || setup == s) })
+	// XXX this breaks if mod_queue is empty...
 	var queue = 
 		chain_length != 1 ?
 			test_queue
 				.map(function(t){
-					return mod_queue 
-						.map(function(m){
-							return setup_queue 
-								.map(function(s){
-									return [s, m, t] }) }) })
+					return mod_queue.length == 0 ?
+						setup_queue 
+							.map(function(s){
+								return [[s, [], t]] })
+						: mod_queue 
+							.map(function(m){
+								return setup_queue 
+									.map(function(s){
+										return [s, m, t] }) }) })
 				.flat(2)
 			: []
 	// NOTE: we are not running these via .map(..) to keep things in 
