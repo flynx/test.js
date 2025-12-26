@@ -603,7 +603,7 @@ module.merge =
 //		...if not then need to cleanup run(..) to use TestSet / BASE_TEST_SET...
 var runner = 
 module.runner =
-async function(spec, chain, stats){
+async function(spec, chain, stats, mod_chain_length=1){
 	// parse chain...
 	chain = (chain == '*' || chain == null) ?
 		[]
@@ -639,31 +639,48 @@ async function(spec, chain, stats){
 
 	var started = Date.now()
 	// tests...
+	var test_queue = 
+		object.deepKeys(tests)
+			.filter(function(t, i, l){
+				return typeof(tests[t]) == 'function'
+					// skip blank tests if we have other tests unless 
+					// explicitly specified...
+					&& ((t == '-' 
+							&& test != t 
+							&& l.length > 1) ?
+						false
+						: (test == '*' 
+							|| test == t) ) })
+	if(mod_chain_length <= 0){
+		var mod_queue = []
+	} else {
+		var mod_queue = object.deepKeys(modifiers)
+			.filter(function(m){
+				return typeof(modifiers[m]) == 'function'
+					&& (mod == '*' || mod == m) })
+			.map(function(m){
+				return [m] })
+		// modifier chains...
+		for(var i=1; i < mod_chain_length; i++){
+			mod_queue = [
+				...mod_queue,
+				...mod_queue
+					.map(function(m){
+						return mod_queue
+							.map(function(mm){
+								return [...m, ...mm] }) })
+					.flat()] } }
+	var setup_queue = object.deepKeys(setups) 
+		.filter(function(s){
+			return typeof(setups[s]) == 'function'
+				&& (setup == '*' || setup == s) })
 	var queue = 
 		chain_length != 1 ?
-			object.deepKeys(tests)
-				.filter(function(t, i, l){
-					return typeof(tests[t]) == 'function'
-						// skip blank tests if we have other tests unless 
-						// explicitly specified...
-						&& ((t == '-' 
-								&& test != t 
-								&& l.length > 1) ?
-							false
-							: (test == '*' 
-								|| test == t) ) })
+			test_queue
 				.map(function(t){
-					// modifiers...
-					return object.deepKeys(modifiers)
-						.filter(function(m){
-							return typeof(modifiers[m]) == 'function'
-								&& (mod == '*' || mod == m) })
+					return mod_queue 
 						.map(function(m){
-							// setups...
-							return object.deepKeys(setups)
-								.filter(function(s){
-									return typeof(setups[s]) == 'function'
-										&& (setup == '*' || setup == s) })
+							return setup_queue 
 								.map(function(s){
 									return [s, m, t] }) }) })
 				.flat(2)
@@ -675,16 +692,15 @@ async function(spec, chain, stats){
 		// run the test...
 		stats.tests += 1
 		var _assert = assert.push(
-			[s, m, t]
+			[s, ...m, t]
 				// do not print blank pass-through ('-') 
 				// components...
 				.filter(function(e){ 
 					return e != '-' }) )
-		await tests[t](
-			_assert, 
-			await modifiers[m](
-				_assert, 
-				await setups[s](_assert))) }
+		var d = await setups[s](_assert)
+		for(var mod of m){
+			d = await modifiers[mod](_assert, d) }
+		await tests[t](_assert, d) }
 
 	// cases...
 	var queue = 
@@ -854,6 +870,16 @@ argv.Parser({
 			process.exit() }},
 
 
+	mod_chain_length: 1,
+	'-m': '-max-modifier-chain',
+	'-max-modifier-chain': {
+		doc: 'Maximum number of modifiers to use in chain',
+		arg: 'NUMBER | mod_chain_length',
+		default: function(){
+			return this.mod_chain_length },
+	},
+
+
 	// queue files/patterns...
 	// XXX should this energetically load modules (current) or queue 
 	// 		them for later loading (on .then(..))...
@@ -910,7 +936,6 @@ argv.Parser({
 									`${key}: only support .js modules, got: "${path}"`) }
 							//that.loadModule(path) }) }) }},
 							that.queueModule(path) }) }) }},
-
 
 	// ignore paths...
 	ignore_files: undefined,
@@ -1003,16 +1028,17 @@ function(default_files, tests){
 			default_files: default_files,
 		})
 
+
 	return p
 		// XXX should this be generic???
 		.then(async function(chains){
 			// run the tests...
 			if(chains.length > 0){
 				for(var chain of chains){
-					await runner(tests, chain, stats) }
+					await runner(tests, chain, stats, this.mod_chain_length) }
 					//await module.BASE_TEST_SET(tests, chain, stats) }
 			} else {
-				await runner(tests, '*', stats) }
+				await runner(tests, '*', stats, this.mod_chain_length) }
 				//await module.BASE_TEST_SET(tests, '*', stats) }
 
 			// XXX BUG for some reason we can get here BEFORE all the 
