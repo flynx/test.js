@@ -1122,4 +1122,4 @@ typeof(__filename) != 'undefined'
 
 
 /**********************************************************************
-* vim:set ts=4 sw=4 :                               */ return module })
+* vim:set ts=4 sw=4 nowrap :                        */ return module })
