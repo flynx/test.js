@@ -387,6 +387,128 @@ object.Constructor('Merged', {
 
 //---------------------------------------------------------------------
 
+var getTests = function(spec){
+	var {setups, modifiers, tests, cases} = spec
+	;[setups, modifiers, tests, cases] = 
+		[setups, modifiers, tests, cases]
+			.map(function(e){
+				return object.parentOf(Merged, e) ?
+					e.toObject()
+					: (e || {}) })
+	return {
+		setups, 
+		modifiers, 
+		tests, 
+		cases,
+	} }
+
+// XXX
+var parseChain = 
+module.parseChain =
+function(spec, chain){
+	var {setups, modifiers, tests, cases} = getTests(spec)
+
+	// parse chain...
+	chain = (chain == '*' || chain == null) ?
+		[]
+		: chain
+	chain = chain instanceof Array ? 
+		chain 
+		: chain.split(/:/)
+	var length = chain.length
+	var setup = chain.shift() || '*'
+	var test = chain.pop() || '*'
+	var mod = chain || '*'
+	mod = length == 2 ? 
+			'as-is' 
+		: mod.length == 1 
+				&& mod[0] == '*' ?
+			'*'
+		: mod
+
+	return {
+		setup,
+		mod,
+		test,
+		length,
+	} }
+
+var buildQueue =
+module.buildQueue = 
+function(spec, chain, mod_chain_length=1){
+	chain = parseChain(chain)
+	var {setups, modifiers, tests, cases} = getTests(spec)
+
+	// tests...
+	var test_queue = 
+		object.deepKeys(tests)
+			.filter(function(t, i, l){
+				return typeof(tests[t]) == 'function'
+					// skip blank tests if we have other tests unless 
+					// explicitly specified...
+					&& ((t == '-' 
+							&& chain.test != t 
+							&& l.length > 1) ?
+						false
+						: (chain.test == '*' 
+							|| chain.test == t) ) })
+	var mod_queue = []
+	if(mod_chain_length > 0){
+		if(chain.mod instanceof Array){
+			mod_queue = [chain.mod]
+		} else {
+			mod_queue = object.deepKeys(modifiers)
+				.filter(function(m){
+					return typeof(modifiers[m]) == 'function'
+						&& (chain.mod == '*' || chain.mod == m) })
+				.map(function(m){
+					return [m] })
+			// modifier chains...
+			for(var i=1; i < mod_chain_length; i++){
+				mod_queue = [
+					...mod_queue,
+					...mod_queue
+						.map(function(m){
+							return mod_queue
+								.map(function(mm){
+									return [...m, ...mm] }) })
+						.flat()] } } }
+	var setup_queue = object.deepKeys(setups) 
+		.filter(function(s){
+			return typeof(setups[s]) == 'function'
+				&& (chain.setup == '*' || chain.setup == s) })
+
+	return {
+		chain,
+		tests: chain.length != 1 ?
+				test_queue
+					.map(function(t){
+						return mod_queue.length == 0 ?
+							setup_queue 
+								.map(function(s){
+									return [[s, [], t]] })
+							: mod_queue 
+								.map(function(m){
+									return setup_queue 
+										.map(function(s){
+											return [s, m, t] }) }) })
+					.flat(2)
+				: [],
+		cases: chain.length <= 1 ?
+			Object.keys(cases)
+				.filter(function(s){
+					return typeof(cases[s]) == 'function'
+						&& (chain.setup == '*' 
+							|| chain.setup == s) })
+			: [],
+	} }
+
+var runQueue = 
+module.runQueue =
+function(queue){
+}
+	
+
 var TestSet =
 module.TestSet =
 object.Constructor('TestSet', {
@@ -406,6 +528,8 @@ object.Constructor('TestSet', {
 
 	__assert__: Assert,
 
+	// XXX DIVERGED FROM runner(..) -- unify!!!
+	// 		...essentially this looks like runner(..) with a different way to get assert...
 	// XXX need to be able to use external assert...
 	// 		- from context...
 	// 		- from arg...
@@ -422,6 +546,7 @@ object.Constructor('TestSet', {
 			stats = stats 
 				|| assert.stats }
 		// parse chain...
+		//chain = this.parseChain(chain)
 		chain = (chain == '*' || chain == null) ?
 			[]
 			: chain
@@ -604,32 +729,7 @@ module.merge =
 var runner = 
 module.runner =
 async function(spec, chain, stats, mod_chain_length=1){
-	// parse chain...
-	chain = (chain == '*' || chain == null) ?
-		[]
-		: chain
-	chain = chain instanceof Array ? 
-		chain 
-		: chain.split(/:/)
-	var chain_length = chain.length
-	var setup = chain.shift() || '*'
-	var test = chain.pop() || '*'
-	var mod = chain || '*'
-	mod = chain_length == 2 ? 
-			'as-is' 
-		: mod.length == 1 
-				&& mod[0] == '*' ?
-			'*'
-		: mod
-
-	// get the tests...
-	var {setups, modifiers, tests, cases} = spec
-	;[setups, modifiers, tests, cases] = 
-		[setups, modifiers, tests, cases]
-			.map(function(e){
-				return object.parentOf(Merged, e) ?
-					e.toObject()
-					: (e || {}) })
+	var {setups, modifiers, tests, cases} = getTests(spec)
 
 	// setup stats...
 	stats = stats || {}
@@ -641,64 +741,13 @@ async function(spec, chain, stats, mod_chain_length=1){
 	})
 
 	var started = Date.now()
-	// tests...
-	var test_queue = 
-		object.deepKeys(tests)
-			.filter(function(t, i, l){
-				return typeof(tests[t]) == 'function'
-					// skip blank tests if we have other tests unless 
-					// explicitly specified...
-					&& ((t == '-' 
-							&& test != t 
-							&& l.length > 1) ?
-						false
-						: (test == '*' 
-							|| test == t) ) })
-	var mod_queue = []
-	if(mod_chain_length > 0){
-		if(mod instanceof Array){
-			mod_queue = [mod]
-		} else {
-			mod_queue = object.deepKeys(modifiers)
-				.filter(function(m){
-					return typeof(modifiers[m]) == 'function'
-						&& (mod == '*' || mod == m) })
-				.map(function(m){
-					return [m] })
-			// modifier chains...
-			for(var i=1; i < mod_chain_length; i++){
-				mod_queue = [
-					...mod_queue,
-					...mod_queue
-						.map(function(m){
-							return mod_queue
-								.map(function(mm){
-									return [...m, ...mm] }) })
-						.flat()] } } }
-	var setup_queue = object.deepKeys(setups) 
-		.filter(function(s){
-			return typeof(setups[s]) == 'function'
-				&& (setup == '*' || setup == s) })
-	// XXX this breaks if mod_queue is empty...
-	var queue = 
-		chain_length != 1 ?
-			test_queue
-				.map(function(t){
-					return mod_queue.length == 0 ?
-						setup_queue 
-							.map(function(s){
-								return [[s, [], t]] })
-						: mod_queue 
-							.map(function(m){
-								return setup_queue 
-									.map(function(s){
-										return [s, m, t] }) }) })
-				.flat(2)
-			: []
+
+	var queue = buildQueue(spec, chain, mod_chain_length)
+
 	// NOTE: we are not running these via .map(..) to keep things in 
 	// 		sequence...
 	var assert = Assert('[TEST]', stats, module.VERBOSE)
-	for(var [s, m, t] of queue){
+	for(var [s, m, t] of queue.tests){
 		// run the test...
 		stats.tests += 1
 		var _assert = assert.push(
@@ -713,23 +762,14 @@ async function(spec, chain, stats, mod_chain_length=1){
 		await tests[t](_assert, d) }
 
 	// cases...
-	var queue = 
-		chain_length <= 1 ?
-			Object.keys(cases)
-				.filter(function(s){
-					return typeof(cases[s]) == 'function'
-						&& (setup == '*' 
-							|| setup == s) })
-			: []
 	var assert = Assert('[CASE]', stats, module.VERBOSE)
-	for(var c of queue){
+	for(var c of queue.cases){
 		stats.tests += 1
 		await cases[c](assert.push(c)) }
 
 	// runtime...
 	stats.time += Date.now() - started
 	return stats }
-//*/
 
 
 
