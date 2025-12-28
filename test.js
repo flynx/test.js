@@ -407,9 +407,7 @@ var getTests = function(spec){
 //
 var parseChain = 
 module.parseChain =
-function(spec, chain){
-	var {setups, modifiers, tests, cases} = getTests(spec)
-
+function(chain){
 	// parse chain...
 	chain = (chain == '*' || chain == null) ?
 		[]
@@ -506,7 +504,7 @@ function(spec, chain, mod_chain_length=1){
 										return [s, m, t] }) }) })
 				.flat(2)
 			: [],
-		cases: chain.length <= 1 ?
+		cases: chain.length == 1 ?
 			Object.keys(cases)
 				.filter(function(s){
 					return typeof(cases[s]) == 'function'
@@ -541,7 +539,7 @@ function(spec, chain, mod_chain_length=1){
 // XXX is this a good name???
 var runTests = 
 module.runTests =
-async function(spec, chain, stats, mod_chain_length=1, assert=Assert){
+async function(spec, chain, stats, mod_chain_length=1, Assert=module.Assert){
 	var {setups, modifiers, tests, cases} = getTests(spec)
 
 	// setup stats...
@@ -559,7 +557,7 @@ async function(spec, chain, stats, mod_chain_length=1, assert=Assert){
 
 	// NOTE: we are not running these via .map(..) to keep things in 
 	// 		sequence...
-	var assert = assert('[TEST]', stats, module.VERBOSE)
+	assert = Assert('[TEST]', stats, module.VERBOSE)
 	for(var [s, m, t] of queue.tests){
 		// run the test...
 		stats.tests += 1
@@ -575,7 +573,7 @@ async function(spec, chain, stats, mod_chain_length=1, assert=Assert){
 		await tests[t](_assert, d) }
 
 	// cases...
-	var assert = assert('[CASE]', stats, module.VERBOSE)
+	assert = Assert('[CASE]', stats, module.VERBOSE)
 	for(var c of queue.cases){
 		stats.tests += 1
 		await cases[c](assert.push(c)) }
@@ -616,10 +614,10 @@ object.Constructor('TestSet', {
 			chain = null 
 			stats = stats 
 				|| assert.stats }
+		// XXX
 		return runTests(this, chain, stats, mod_chain_length, assert) },
 		/*/
 		// parse chain...
-		//chain = this.parseChain(chain)
 		chain = (chain == '*' || chain == null) ?
 			[]
 			: chain
