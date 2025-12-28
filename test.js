@@ -263,17 +263,18 @@ object.Constructor('Assert', {
 
 // XXX
 var mergeIter = function(iter){
-	// XXX should this get a function as argument???
 	return function(c){
 		c = c || this
 		return (c.members || [])
-			.map(function(e){ return Object[iter](e) })
+			.map(function(e){ 
+				return Object[iter](e) })
 			.flat() } }
 
 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Object representing the sum of all it's members.
 //
 // 	Merged(name, func)
 // 		-> merged
@@ -282,12 +283,23 @@ var mergeIter = function(iter){
 // 		-> merged
 //
 //
-// Merged is the sum of all its members.
-//
-// XXX is this generic enough to be moved to ig-types???
+// XXX revise: members either need to be mixed in or not, now both are 
+// 		done:
+// 			.__init__(..) 						- adds and mixes in
+// 			.add(..) / .remove(..) / .clear()	- only add
+// 		another issue is the set of iterators, they either go through
+// 		all attributes of al members (as-is now) or go through local 
+// 		attributes...
+// 		-> decide if we mixin or store, and make this consistent.
 var Merged = 
 module.Merged =
 object.Constructor('Merged', {
+	// can be:
+	// 	'warn' (default)
+	// 	'fail'
+	// 	'ignore'
+	__shadow_handling__: 'warn',
+
 	__members: undefined,
 	get members(){
 		return this.__members == null ?
@@ -310,6 +322,7 @@ object.Constructor('Merged', {
 		var k = this.keys()
 		return k.length - (k.includes('-') ? 1 : 0) },
 
+	// XXX should this object.mixinFlat(this, other) like is done in .__init__(..) ???
 	add: function(member){
 		this.members.push(member)
 		return this },
@@ -323,6 +336,7 @@ object.Constructor('Merged', {
 		delete this.__members
 		return this },
 
+	// XXX if the above use mixin/mixout, should these simply use Object's API???
 	keys: mergeIter('keys'),
 	values: mergeIter('values'),
 	entries: mergeIter('entries'),
@@ -349,14 +363,19 @@ object.Constructor('Merged', {
 					.filter(function(k){
 						return existing.has(k) }) })
    			.flat()	},
-	handleShadowing: function(shadowed){
-		shadowed.length > 0
-			&& console.warn(`  WARNING:`.bold, `shadowing: ${shadowed.join()}`)
+	handleShadowing: function(shadowed, mode='warn'){
+		if(shadowed.length > 0 
+				&& mode != 'ignore'){
+			if(mode == 'fail'){
+				throw new Error('ERR:'.bold, `shadowing: ${ shadowing.join() }`) }
+			console.warn(`  WARNING:`.bold, `shadowing: ${shadowed.join()}`) }
 		return this },
 
 	create: function(name){
 		return object.Constructor(name || this.name, this, {}) },
 }, {
+	//__shadow_handling__: 'warn',
+
 	filename: undefined,
 
 	__init__: function(other){
@@ -374,7 +393,9 @@ object.Constructor('Merged', {
 
 		// check for shadowing...
 		this.constructor.handleShadowing(
-			this.constructor.checkShadowing(other))
+			this.constructor.checkShadowing(other),
+			this.__shadow_handling__ 
+				?? this.constructor.__shadow_handling__)
 
 		// mix and merge...
 		object.mixinFlat(this, other) 
@@ -387,7 +408,9 @@ object.Constructor('Merged', {
 
 // Get tests from a test object...
 //
-var getTests = function(spec){
+var getTests = 
+module.getTests =
+function(spec){
 	var {setups, modifiers, tests, cases} = spec
 	;[setups, modifiers, tests, cases] = 
 		[setups, modifiers, tests, cases]
