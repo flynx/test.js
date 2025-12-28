@@ -8,12 +8,11 @@
 *
 *
 * TODO:
-* 	- a mor descriptive assertion fail...
+* 	- a more descriptive assertion fail...
 * 		would be nice to:
 * 			- know what exactly failed and what was expected automatically
 * 			- ...
 * 	- list found files...
-* 	- flexible test chains with 0 or more modifiers...
 * 	- might be a good idea to detect test module type and run only our 
 * 		ones...
 *
@@ -60,7 +59,7 @@ module.IGNORE_TEST_FILES = ['node_modules/**']
 // 		or
 // 			$ VERBOSE=1 node test.js
 // 		or set this manually after require('./test') but before calling 
-// 		the runner(..) or run(..)
+// 		the runTests(..) or run(..)
 // NOTE: this may change in the future...
 module.VERBOSE = process ?
 	process.env.VERBOSE
@@ -275,7 +274,6 @@ var mergeIter = function(iter){
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 //
 // 	Merged(name, func)
 // 		-> merged
@@ -387,6 +385,8 @@ object.Constructor('Merged', {
 
 //---------------------------------------------------------------------
 
+// Get tests from a test object...
+//
 var getTests = function(spec){
 	var {setups, modifiers, tests, cases} = spec
 	;[setups, modifiers, tests, cases] = 
@@ -402,7 +402,9 @@ var getTests = function(spec){
 		cases,
 	} }
 
-// XXX
+
+// Parse test chain...
+//
 var parseChain = 
 module.parseChain =
 function(spec, chain){
@@ -433,6 +435,16 @@ function(spec, chain){
 		length,
 	} }
 
+
+// Build test chain queue...
+//
+// NOTE: this might look too nested-looped but this needs to do several 
+// 		dimensions of cartesian products, so no way around this.
+//
+// XXX add support for partial patterns
+// 		e.g.
+// 			test-*:*-keyword:*x
+// XXX log test errors -- unavailable tests, invalid chains, ... etc.
 var buildQueue =
 module.buildQueue = 
 function(spec, chain, mod_chain_length=1){
@@ -481,19 +493,19 @@ function(spec, chain, mod_chain_length=1){
 	return {
 		chain,
 		tests: chain.length != 1 ?
-				test_queue
-					.map(function(t){
-						return mod_queue.length == 0 ?
-							setup_queue 
-								.map(function(s){
-									return [[s, [], t]] })
-							: mod_queue 
-								.map(function(m){
-									return setup_queue 
-										.map(function(s){
-											return [s, m, t] }) }) })
-					.flat(2)
-				: [],
+			test_queue
+				.map(function(t){
+					return mod_queue.length == 0 ?
+						setup_queue 
+							.map(function(s){
+								return [[s, [], t]] })
+						: mod_queue 
+							.map(function(m){
+								return setup_queue 
+									.map(function(s){
+										return [s, m, t] }) }) })
+				.flat(2)
+			: [],
 		cases: chain.length <= 1 ?
 			Object.keys(cases)
 				.filter(function(s){
@@ -503,11 +515,78 @@ function(spec, chain, mod_chain_length=1){
 			: [],
 	} }
 
-var runQueue = 
-module.runQueue =
-function(queue){
-}
-	
+
+// Test runner/combinator...
+//
+// 	runTests(spec)
+// 	runTests(spec, '*')
+// 		-> promise(stats)
+//
+// 	runTests(spec, 'case')
+// 	runTests(spec, 'setup:test')
+// 	runTests(spec, 'setup:mod:test')
+// 		-> promise(stats)
+//
+//
+// This will run 
+// 		test(modifier(setup)) 
+// 			for each test in spec.tests
+// 			for each modifier in spec.modifiers
+// 			for each setup in spec.setups
+// 		case() 
+// 			for each case in spec.cases
+//
+//
+// XXX make Assert optional...
+// XXX is this a good name???
+var runTests = 
+module.runTests =
+async function(spec, chain, stats, mod_chain_length=1, assert=Assert){
+	var {setups, modifiers, tests, cases} = getTests(spec)
+
+	// setup stats...
+	stats = stats || {}
+	Object.assign(stats, {
+		tests: stats.tests || 0,
+		assertions: stats.assertions || 0,
+		failures: stats.failures || 0,
+		time: stats.time || 0,
+	})
+
+	var started = Date.now()
+
+	var queue = buildQueue(spec, chain, mod_chain_length)
+
+	// NOTE: we are not running these via .map(..) to keep things in 
+	// 		sequence...
+	var assert = assert('[TEST]', stats, module.VERBOSE)
+	for(var [s, m, t] of queue.tests){
+		// run the test...
+		stats.tests += 1
+		var _assert = assert.push(
+			[s, ...m, t]
+				// do not print blank pass-through ('-') 
+				// components...
+				.filter(function(e){ 
+					return e != '-' }) )
+		var d = await setups[s](_assert)
+		for(var mod of m){
+			d = await modifiers[mod](_assert, d) }
+		await tests[t](_assert, d) }
+
+	// cases...
+	var assert = assert('[CASE]', stats, module.VERBOSE)
+	for(var c of queue.cases){
+		stats.tests += 1
+		await cases[c](assert.push(c)) }
+
+	// runtime...
+	stats.time += Date.now() - started
+	return stats }
+
+
+
+//---------------------------------------------------------------------
 
 var TestSet =
 module.TestSet =
@@ -528,23 +607,17 @@ object.Constructor('TestSet', {
 
 	__assert__: Assert,
 
-	// XXX DIVERGED FROM runner(..) -- unify!!!
-	// 		...essentially this looks like runner(..) with a different way to get assert...
-	// XXX need to be able to use external assert...
-	// 		- from context...
-	// 		- from arg...
 	// XXX nested assert(..) need to report nestedness correctly...
-	// XXX should/can this return a meaningfull result for it to be used
-	// 		as a setup/mod???
-	// XXX this is very similar to runner(..)...
-	__call__: async function(context, chain, stats){
-		var assert
+	__call__: async function(chain, stats, mod_chain_length=1){
+		var assert = this.__assert__
 		// running nested...
 		if(typeof(chain) == 'function'){
 			assert = chain
 			chain = null 
 			stats = stats 
 				|| assert.stats }
+		return runTests(this, chain, stats, mod_chain_length, assert) },
+		/*/
 		// parse chain...
 		//chain = this.parseChain(chain)
 		chain = (chain == '*' || chain == null) ?
@@ -639,6 +712,7 @@ object.Constructor('TestSet', {
 		// runtime...
 		stats.time += Date.now() - started
 		return stats },
+	//*/
 
 	__init__: function(func){
 		// test collections...
@@ -671,7 +745,6 @@ object.Constructor('TestSet', {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-// XXX rename to runner...
 module.BASE_TEST_SET = new TestSet()
 
 module.Setup =
@@ -694,82 +767,6 @@ module.Cases =
 // XXX this is just a proxy to Cases(..), do we need it?
 module.merge =
 	module.BASE_TEST_SET.merge
-
-
-
-//---------------------------------------------------------------------
-// Test runner/combinator...
-//
-// 	runner(spec)
-// 	runner(spec, '*')
-// 		-> promise(stats)
-//
-// 	runner(spec, 'case')
-// 	runner(spec, 'setup:test')
-// 	runner(spec, 'setup:mod:test')
-// 		-> promise(stats)
-//
-//
-// This will run 
-// 		test(modifier(setup)) 
-// 			for each test in spec.tests
-// 			for each modifier in spec.modifiers
-// 			for each setup in spec.setups
-// 		case() 
-// 			for each case in spec.cases
-//
-//
-// NOTE: chaining more than one modifier is not yet supported (XXX)
-//
-// XXX chain N modifiers...
-// XXX make Assert optional...
-// XXX is this a good name???
-//* XXX do we need a root runner???
-//		...if not then need to cleanup run(..) to use TestSet / BASE_TEST_SET...
-var runner = 
-module.runner =
-async function(spec, chain, stats, mod_chain_length=1){
-	var {setups, modifiers, tests, cases} = getTests(spec)
-
-	// setup stats...
-	stats = stats || {}
-	Object.assign(stats, {
-		tests: stats.tests || 0,
-		assertions: stats.assertions || 0,
-		failures: stats.failures || 0,
-		time: stats.time || 0,
-	})
-
-	var started = Date.now()
-
-	var queue = buildQueue(spec, chain, mod_chain_length)
-
-	// NOTE: we are not running these via .map(..) to keep things in 
-	// 		sequence...
-	var assert = Assert('[TEST]', stats, module.VERBOSE)
-	for(var [s, m, t] of queue.tests){
-		// run the test...
-		stats.tests += 1
-		var _assert = assert.push(
-			[s, ...m, t]
-				// do not print blank pass-through ('-') 
-				// components...
-				.filter(function(e){ 
-					return e != '-' }) )
-		var d = await setups[s](_assert)
-		for(var mod of m){
-			d = await modifiers[mod](_assert, d) }
-		await tests[t](_assert, d) }
-
-	// cases...
-	var assert = Assert('[CASE]', stats, module.VERBOSE)
-	for(var c of queue.cases){
-		stats.tests += 1
-		await cases[c](assert.push(c)) }
-
-	// runtime...
-	stats.time += Date.now() - started
-	return stats }
 
 
 
@@ -1085,10 +1082,10 @@ function(default_files, tests){
 			// run the tests...
 			if(chains.length > 0){
 				for(var chain of chains){
-					await runner(tests, chain, stats, this.mod_chain_length) }
+					await runTests(tests, chain, stats, this.mod_chain_length) }
 					//await module.BASE_TEST_SET(tests, chain, stats) }
 			} else {
-				await runner(tests, '*', stats, this.mod_chain_length) }
+				await runTests(tests, '*', stats, this.mod_chain_length) }
 				//await module.BASE_TEST_SET(tests, '*', stats) }
 
 			// XXX BUG for some reason we can get here BEFORE all the 
