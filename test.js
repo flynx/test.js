@@ -262,7 +262,8 @@ object.Constructor('Assert', {
 //---------------------------------------------------------------------
 
 // XXX
-var mergeIter = function(iter){
+var mergeIter = 
+function(iter){
 	return function(c){
 		c = c || this
 		return (c.members || [])
@@ -431,21 +432,31 @@ function(spec){
 var parseChain = 
 module.parseChain =
 function(chain){
+	if(chain == '**' 
+			|| chain == null){
+		return '**' }
+
 	// parse chain...
-	chain = (chain == '*' || chain == null) ?
-		[]
-		: chain
 	chain = chain instanceof Array ? 
 		chain 
 		: chain.split(/:/)
+
+	// test-case...
+	if(chain.length == 1){
+		return {
+			test_case: chain[0],
+			length: 1,
+		} }
+
+	// test chain...
 	var length = chain.length
 	var setup = chain.shift() || '*'
 	var test = chain.pop() || '*'
 	var mod = chain || '*'
 	mod = length == 2 ? 
 			'as-is' 
-		: mod.length == 1 
-				&& mod[0] == '*' ?
+		: mod.length == 0 
+				|| mod[0] == '*' ?
 			'*'
 		: mod
 
@@ -477,14 +488,15 @@ function(spec, chain, mod_chain_length=1){
 		object.deepKeys(tests)
 			.filter(function(t, i, l){
 				return typeof(tests[t]) == 'function'
-					// skip blank tests if we have other tests unless 
-					// explicitly specified...
-					&& ((t == '-' 
-							&& chain.test != t 
-							&& l.length > 1) ?
-						false
-						: (chain.test == '*' 
-							|| chain.test == t) ) })
+						// skip blank tests if we have other tests unless 
+						// explicitly specified...
+						&& ((t == '-' 
+								&& chain.test != t 
+								&& l.length > 1) ?
+							false
+							: (chain == '**'
+								|| chain.test == '*' 
+								|| chain.test == t) ) })
 	var mod_queue = []
 	if(mod_chain_length > 0){
 		if(chain.mod instanceof Array){
@@ -493,7 +505,9 @@ function(spec, chain, mod_chain_length=1){
 			mod_queue = object.deepKeys(modifiers)
 				.filter(function(m){
 					return typeof(modifiers[m]) == 'function'
-						&& (chain.mod == '*' || chain.mod == m) })
+						&& (chain == '**'
+							|| chain.mod == '*' 
+							|| chain.mod == m) })
 				.map(function(m){
 					return [m] })
 			// modifier chains...
@@ -509,11 +523,14 @@ function(spec, chain, mod_chain_length=1){
 	var setup_queue = object.deepKeys(setups) 
 		.filter(function(s){
 			return typeof(setups[s]) == 'function'
-				&& (chain.setup == '*' || chain.setup == s) })
+				&& (chain == '**'
+					|| chain.setup == '*' 
+					|| chain.setup == s) })
 
 	return {
 		chain,
-		tests: chain.length != 1 ?
+		tests: (chain == '**' 
+				|| chain.length != 1) ?
 			test_queue
 				.map(function(t){
 					return mod_queue.length == 0 ?
@@ -527,11 +544,13 @@ function(spec, chain, mod_chain_length=1){
 										return [s, m, t] }) }) })
 				.flat(2)
 			: [],
-		cases: chain.length == 1 ?
+		cases: (chain == '**' 
+				|| chain.length == 1) ?
 			Object.keys(cases)
 				.filter(function(s){
 					return typeof(cases[s]) == 'function'
-						&& (chain.setup == '*' 
+						&& (chain == '**'
+							|| chain.setup == '*' 
 							|| chain.setup == s) })
 			: [],
 	} }
@@ -558,11 +577,9 @@ function(spec, chain, mod_chain_length=1){
 // 			for each case in spec.cases
 //
 //
-// XXX make Assert optional...
-// XXX is this a good name???
 var runTests = 
 module.runTests =
-async function(spec, chain, stats, mod_chain_length=1, Assert=module.Assert){
+async function(spec, chain, stats, mod_chain_length=1, assert){
 	var {setups, modifiers, tests, cases} = getTests(spec)
 
 	// setup stats...
@@ -580,11 +597,14 @@ async function(spec, chain, stats, mod_chain_length=1, Assert=module.Assert){
 
 	// NOTE: we are not running these via .map(..) to keep things in 
 	// 		sequence...
-	assert = Assert('[TEST]', stats, module.VERBOSE)
+	var test_assert = assert == null ?
+		module.Assert('[TEST]', stats, module.VERBOSE)
+		// XXX is this a good indicator???
+		: assert.push('[TEST]')
 	for(var [s, m, t] of queue.tests){
 		// run the test...
 		stats.tests += 1
-		var _assert = assert.push(
+		var _assert = test_assert.push(
 			[s, ...m, t]
 				// do not print blank pass-through ('-') 
 				// components...
@@ -596,10 +616,13 @@ async function(spec, chain, stats, mod_chain_length=1, Assert=module.Assert){
 		await tests[t](_assert, d) }
 
 	// cases...
-	assert = Assert('[CASE]', stats, module.VERBOSE)
+	var case_assert = assert == null ? 
+		module.Assert('[CASE]', stats, module.VERBOSE)
+		// XXX is this a good indicator???
+		: assert.push('[CASE]')
 	for(var c of queue.cases){
 		stats.tests += 1
-		await cases[c](assert.push(c)) }
+		await cases[c](case_assert.push(c)) }
 
 	// runtime...
 	stats.time += Date.now() - started
@@ -629,7 +652,7 @@ object.Constructor('TestSet', {
 	__assert__: Assert,
 
 	// XXX nested assert(..) need to report nestedness correctly...
-	__call__: async function(chain, stats, mod_chain_length=1){
+	__call__: async function(_, chain, stats, mod_chain_length=1){
 		var assert = this.__assert__
 		// running nested...
 		if(typeof(chain) == 'function'){
@@ -722,7 +745,15 @@ argv.Parser({
 
 		Zero or more sets of tests can be specified.
 
-		When no tests specified $SCRIPTNAME will run all tests.
+		If no tests are specified or '**' is given $SCRIPTNAME will run
+		all found tests:
+				
+				$ ./$SCRIPTNAME
+		or:
+				$ ./$SCRIPTNAME '**'
+
+		Note that using '*' or '**' may require escaping as they may 
+		get expanded by the shell.
 		`,
 	examples: [
 		['$ ./$SCRIPTNAME', 
@@ -923,6 +954,7 @@ argv.Parser({
 				|| [] } },
 
 
+	'-v': '-verbose',
 	'-verbose': {
 		doc: 'verbose mode',
 		env: 'VERBOSE',
@@ -1010,7 +1042,7 @@ function(default_files, tests){
 					await runTests(tests, chain, stats, this.mod_chain_length) }
 					//await module.BASE_TEST_SET(tests, chain, stats) }
 			} else {
-				await runTests(tests, '*', stats, this.mod_chain_length) }
+				await runTests(tests, '**', stats, this.mod_chain_length) }
 				//await module.BASE_TEST_SET(tests, '*', stats) }
 
 			// XXX BUG for some reason we can get here BEFORE all the 
