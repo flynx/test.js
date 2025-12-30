@@ -569,12 +569,14 @@ function(spec, chain, mod_chain_length=1){
 //
 //
 // This will run 
-// 		test(modifier(setup)) 
+// 		test(assert, modifier(setup), skipTest) 
 // 			for each test in spec.tests
 // 			for each modifier in spec.modifiers
 // 			for each setup in spec.setups
-// 		case() 
+// 		case(assert, skipTest) 
 // 			for each case in spec.cases
+//
+// Calling skipTest() will remove current test from the stats.
 //
 //
 var runTests = 
@@ -590,6 +592,14 @@ async function(spec, chain, stats, mod_chain_length=1, assert){
 		failures: stats.failures || 0,
 		time: stats.time || 0,
 	})
+
+	var makeSkipTest = function(){
+		var ran = false
+		return function(){
+			if(ran){
+				return }
+			ran = true
+			stats.tests-- } }
 
 	var started = Date.now()
 
@@ -613,7 +623,7 @@ async function(spec, chain, stats, mod_chain_length=1, assert){
 		var d = await setups[s](_assert)
 		for(var mod of m){
 			d = await modifiers[mod](_assert, d) }
-		await tests[t](_assert, d) }
+		await tests[t](_assert, d, makeSkipTest()) }
 
 	// cases...
 	var case_assert = assert == null ? 
@@ -622,7 +632,7 @@ async function(spec, chain, stats, mod_chain_length=1, assert){
 		: assert.push('[CASE]')
 	for(var c of queue.cases){
 		stats.tests += 1
-		await cases[c](case_assert.push(c)) }
+		await cases[c](case_assert.push(c), makeSkipTest()) }
 
 	// runtime...
 	stats.time += Date.now() - started
