@@ -488,15 +488,17 @@ function(spec, chain, mod_chain_length=1){
 		object.deepKeys(tests)
 			.filter(function(t, i, l){
 				return typeof(tests[t]) == 'function'
-						// skip blank tests if we have other tests unless 
-						// explicitly specified...
-						&& ((t == '-' 
-								&& chain.test != t 
-								&& l.length > 1) ?
-							false
-							: (chain == '**'
-								|| chain.test == '*' 
-								|| chain.test == t) ) })
+					// skip methods starting with '_'...
+					&& t[0] != '_'
+					// skip blank tests if we have other tests unless 
+					// explicitly specified...
+					&& ((t == '-' 
+							&& chain.test != t 
+							&& l.length > 1) ?
+						false
+						: (chain == '**'
+							|| chain.test == '*' 
+							|| chain.test == t) ) })
 	var mod_queue = []
 	if(mod_chain_length > 0){
 		if(chain.mod instanceof Array){
@@ -505,6 +507,8 @@ function(spec, chain, mod_chain_length=1){
 			mod_queue = object.deepKeys(modifiers)
 				.filter(function(m){
 					return typeof(modifiers[m]) == 'function'
+						// skip methods starting with '_'...
+						&& t[0] != '_'
 						&& (chain == '**'
 							|| chain.mod == '*' 
 							|| chain.mod == m) })
@@ -523,6 +527,8 @@ function(spec, chain, mod_chain_length=1){
 	var setup_queue = object.deepKeys(setups) 
 		.filter(function(s){
 			return typeof(setups[s]) == 'function'
+				// skip methods starting with '_'...
+				&& t[0] != '_'
 				&& (chain == '**'
 					|| chain.setup == '*' 
 					|| chain.setup == s) })
@@ -549,6 +555,8 @@ function(spec, chain, mod_chain_length=1){
 			Object.keys(cases)
 				.filter(function(s){
 					return typeof(cases[s]) == 'function'
+						// skip methods starting with '_'...
+						&& t[0] != '_'
 						&& (chain == '**'
 							|| chain.setup == '*' 
 							|| chain.setup == s) })

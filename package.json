@@ -1,6 +1,6 @@
 {
   "name": "ig-test",
-  "version": "1.6.5",
+  "version": "1.6.6",
   "description": "experimental test runner....",
   "main": "test.js",
   "bin": {
