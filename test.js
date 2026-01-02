@@ -508,7 +508,7 @@ function(spec, chain, mod_chain_length=1){
 				.filter(function(m){
 					return typeof(modifiers[m]) == 'function'
 						// skip methods starting with '_'...
-						&& t[0] != '_'
+						&& m[0] != '_'
 						&& (chain == '**'
 							|| chain.mod == '*' 
 							|| chain.mod == m) })
@@ -528,7 +528,7 @@ function(spec, chain, mod_chain_length=1){
 		.filter(function(s){
 			return typeof(setups[s]) == 'function'
 				// skip methods starting with '_'...
-				&& t[0] != '_'
+				&& s[0] != '_'
 				&& (chain == '**'
 					|| chain.setup == '*' 
 					|| chain.setup == s) })
@@ -556,7 +556,7 @@ function(spec, chain, mod_chain_length=1){
 				.filter(function(s){
 					return typeof(cases[s]) == 'function'
 						// skip methods starting with '_'...
-						&& t[0] != '_'
+						&& s[0] != '_'
 						&& (chain == '**'
 							|| chain.setup == '*' 
 							|| chain.setup == s) })
