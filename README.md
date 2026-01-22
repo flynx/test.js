@@ -6,19 +6,19 @@ This is not meant as a replacement for more advanced and feature-rich testing
 frameworks, instead this is a minimalist and complete experimental implementation
 of a specific approach to testing, i.e. _combinational testing_
 
-Note, **this module is experimental** and can change quite allot within a shot to mid
-timeframe, use at your own risk, though ideas, feedback and suggestions are welcome.
+Note, **this module is experimental** and can change quite allot within a short to mid
+time frame, use at your own risk, though ideas, feedback and suggestions are welcome.
 
 ## Features
 
 - Simple / minimalist implementation
 - Supports combinational as well as unit testing paradigms
+- Multiple modifier chaining
 - 
 
 
 ### Planned
 
-- Multiple modifier chaining
 - Replaceable/extensible assertion library
 -  
 
