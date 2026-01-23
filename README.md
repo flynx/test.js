@@ -9,6 +9,8 @@ of a specific approach to testing, i.e. _combinational testing_
 Note, **this module is experimental** and can change quite allot within a short to mid
 time frame, use at your own risk, though ideas, feedback and suggestions are welcome.
 
+
+
 ## Features
 
 - Simple / minimalist implementation
@@ -21,6 +23,7 @@ time frame, use at your own risk, though ideas, feedback and suggestions are wel
 
 - Replaceable/extensible assertion library
 -  
+
 
 
 ## Contents
@@ -64,6 +67,7 @@ time frame, use at your own risk, though ideas, feedback and suggestions are wel
   - [License](#license)
 
 
+
 ## Architecture
 
 This package implements two testing schemes:
@@ -87,7 +91,7 @@ The system builds chains in the form:
 setup -> modifier* -> test
 ```
 
-Where `modifier` can me either single or a chain of modifiers.
+Where `modifier` is optional and can be a chain of zero or more modifiers.
 
 A `setup` and `modifier` can also include assertions/tests for direct testing and 
 sanity checks.
@@ -107,6 +111,7 @@ This makes it simple to define procedural/generative tests.
 This is the traditional self-contained test approach.
 
 
+
 ## Installation
 
 ```shell_session
@@ -117,6 +122,7 @@ And to install the global CLI interface
 ```shell_session
 $ npm install -g ig-test
 ```
+
 
 
 ## Basic usage
@@ -244,6 +250,7 @@ $ runtests --list
 XXX chains
 
 XXX notes on coverage
+
 
 
 ## Components
@@ -496,6 +503,7 @@ This will:
 ```
 
 
+
 ## Advanced components
 
 ### `runner(..)`
@@ -508,11 +516,15 @@ The default test combinator and runner.
 The default [`ig-argv`][ig-argv] parser setup.
 
 
+
 ## Utilities
 
 ### `getCallerFilename()`
 
 Returns the filename of the module where `getCallerFilename()` is called.
+
+- Multiple modifier chaining
+
 
 
 ## License
