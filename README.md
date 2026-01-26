@@ -247,12 +247,12 @@ Options:
 				  (env: $VERBOSE)
 
 Examples:
-	$ ./test.js		- [90mrun all tests.[39m
-	$ ./test.js basic:*:*	- [90mrun all tests and modifiers on "basic" setup.[39m
-				  [90m(see test.js -l for more info)[39m
-	$ ./test.js -v example	- [90mrun "example" test in verbose mode.[39m
+	$ ./test.js		- run all tests.
+	$ ./test.js basic:*:*	- run all tests and modifiers on "basic" setup.
+				  (see test.js -l for more info)
+	$ ./test.js -v example	- run "example" test in verbose mode.
 	$ ./test.js native:gen3:methods init:gen3:methods
-				- [90mrun two tests/patterns.[39m
+				- run two tests/patterns.
 
 Written by: Alex A. Naanou <alex.nanou@gmail.com>
 Version: 1.6.7 / License: BSD-3-Clause
