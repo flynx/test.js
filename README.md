@@ -192,6 +192,7 @@ $ npm install -g ig-test
 ```
 
 Basic help
+<!-- NOTE: to update this do :.,/'''/-1!./test.js --help -->
 ```shell_session
 $ runtests --help 
 Usage: test.js [OPTIONS] [CHAIN] ...
@@ -215,32 +216,46 @@ only on the basic setup.
 
 Zero or more sets of tests can be specified.
 
-When no tests specified test.js will run all tests.
+If no tests are specified or '**' is given test.js will run
+all found tests:
+        
+        $ ./test.js
+or:
+        $ ./test.js '**'
+
+Note that using '*' or '**' may require escaping as they may 
+get expanded by the shell.
 
 Options:
-        -h,  --help             - print this message and exit
-        -v,  --version          - show test.js verion and exit
-        -l,  --list=PATH        - list available tests;
-                                  note that if passing files via -f explicitly they
-                                  must precede the -l/-list flag;
-                                  this has the same defaults as -f
-             --list-found=PATH  - like -list but print found test modules and exit
-        -f,  --test-file=PATH   - test script or filename pattern, supports glob;
-                                  this flag can be given multiple times for
-                                  multiple paths/patterns
-                                  (default: **/?(*-)test.js)
-        -i,  --ignore=PATH      - path/pattern to ignore in test file search
-                                  (default: node_modules/**)
-             --verbose          - verbose mode
-                                  (env: $VERBOSE)
+	-h,  --help		- print this message and exit
+	     --version		- show test.js version and exit
+	-l,  --list=PATH	- list available tests;
+				  note that if passing files via -f explicitly they
+				  must precede the -l/-list flag;
+				  this has the same defaults as -f
+	     --list-found=PATH	- like -list but print found test modules and exit
+	-m,  --max-modifier-chain=NUMBER
+				- Maximum number of modifiers to use in chain
+				  (default: 1)
+	-f,  --test-file=PATH	- test script or filename pattern, supports glob;
+				  this flag can be given multiple times for
+				  multiple paths/patterns
+				  (default: "**/?(*-)test.js")
+	-i,  --ignore=PATH	- path/pattern to ignore in test file search
+				  (default: ["node_modules/**"])
+	-v,  --verbose		- verbose mode
+				  (env: $VERBOSE)
 
 Examples:
-        $ ./test.js             - run all tests.
-        $ ./test.js basic:*:*   - run all tests and modifiers on "basic" setup.
-                                  (see test.js -l for more info)
-        $ ./test.js -v example  - run "example" test in verbose mode.
-        $ ./test.js native:gen3:methods init:gen3:methods
-                                - run two tests/patterns.
+	$ ./test.js		- [90mrun all tests.[39m
+	$ ./test.js basic:*:*	- [90mrun all tests and modifiers on "basic" setup.[39m
+				  [90m(see test.js -l for more info)[39m
+	$ ./test.js -v example	- [90mrun "example" test in verbose mode.[39m
+	$ ./test.js native:gen3:methods init:gen3:methods
+				- [90mrun two tests/patterns.[39m
+
+Written by: Alex A. Naanou <alex.nanou@gmail.com>
+Version: 1.6.7 / License: BSD-3-Clause
 ```
 
 List available test components
