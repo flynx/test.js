@@ -192,7 +192,9 @@ $ npm install -g ig-test
 ```
 
 Basic help
-<!-- NOTE: to update this do :.,/'''/-1!./test.js --help -->
+<!-- NOTE: to update this do
+	:.,/```/-1!node ./test.js --help | sed 's/\x1b\[[0-9;]*m//g'
+-->
 ```shell_session
 $ runtests --help 
 Usage: test.js [OPTIONS] [CHAIN] ...
