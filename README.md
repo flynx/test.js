@@ -194,6 +194,9 @@ $ npm install -g ig-test
 Basic help
 <!-- NOTE: to update this do
 	:.,/```/-1!node ./test.js --help | sed 's/\x1b\[[0-9;]*m//g'
+	
+XXX is there a way to automate this??
+	...should it be a function of argv.js's --help functionality???
 -->
 ```shell_session
 $ runtests --help 
