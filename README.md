@@ -197,6 +197,7 @@ Basic help
 	
 XXX is there a way to automate this??
 	...should it be a function of argv.js's --help functionality???
+	...a makefile??
 -->
 ```shell_session
 $ runtests --help 
