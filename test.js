@@ -39,7 +39,7 @@ var argv = require('ig-argv')
 // 		| <path>
 // 		| [ <path>, .. ]
 //
-module.DEFAULT_TEST_FILES = '**/?(*-)test.js'
+module.DEFAULT_TEST_FILES = '{**/?(*-)test.js,**/test/**.js}'
 
 
 //
@@ -790,8 +790,7 @@ argv.Parser({
 
 	// list tests...
 	//
-	//default_files: undefined,
-	default_files: '{**/test/*.js,**-test.js,**/test.js,test.js}',
+	default_files: undefined,
 	// NOTE: this uses .helpColumnOffset to align origins...
 	// XXX if we do the printing in .stop(..) this will see all the modules...
 	'-l': '-list',
