@@ -790,9 +790,9 @@ argv.Parser({
 
 	// list tests...
 	//
+	//default_files: undefined,
+	default_files: '{**/test/*.js,**-test.js,**/test.js,test.js}',
 	// NOTE: this uses .helpColumnOffset to align origins...
-	default_files: undefined,
-
 	// XXX if we do the printing in .stop(..) this will see all the modules...
 	'-l': '-list',
 	'-list': {
